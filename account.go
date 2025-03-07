@@ -9,9 +9,10 @@ type AccountTransferArgs struct {
 
 func NewAccountTransferArgs(from AccountName, to AccountName, symbol SymbolId, amount Amount) *AccountTransferArgs {
 	return &AccountTransferArgs{
-		from:   from,
-		to:     to,
-		symbol: symbol,
+		from,
+		to,
+		symbol,
+		amount,
 	}
 }
 

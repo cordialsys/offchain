@@ -7,6 +7,7 @@ import (
 )
 
 func NewGetBalancesCmd() *cobra.Command {
+	var account string
 	cmd := &cobra.Command{
 		SilenceUsage: true,
 		Use:          "balances",
@@ -17,8 +18,13 @@ func NewGetBalancesCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			accountName := oc.CoreFunding
+			if account != "" {
+				accountName = oc.NewAccountName(account)
+			}
+			balanceArgs := oc.NewGetBalanceArgs(accountName)
 
-			assets, err := cli.ListBalances(oc.GetBalanceArgs{})
+			assets, err := cli.ListBalances(balanceArgs)
 			if err != nil {
 				return err
 			}
@@ -26,5 +32,11 @@ func NewGetBalancesCmd() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().StringVar(
+		&account,
+		"account",
+		"",
+		"the account to get balances for",
+	)
 	return cmd
 }

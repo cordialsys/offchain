@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.9
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.2
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/vault/api v1.16.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/shopspring/decimal v1.4.0

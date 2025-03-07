@@ -5,7 +5,6 @@ import (
 
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/exchanges/okx/api"
-	"github.com/cordialsys/offchain/pkg/debug"
 )
 
 type Client struct {
@@ -30,6 +29,9 @@ func NewClient(config *oc.ExchangeConfig) (*Client, error) {
 	api, err := api.NewClient(apiKey, secretKey, passphrase)
 	if err != nil {
 		return nil, err
+	}
+	if config.ApiUrl != "" {
+		api.SetBaseURL(config.ApiUrl)
 	}
 	return &Client{
 		api: api,
@@ -77,7 +79,7 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 const FundingAcount = "6"
 const TradingAcount = "18"
 
-func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) error {
+func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) (*oc.TransferStatus, error) {
 
 	from := ""
 	to := ""
@@ -87,7 +89,7 @@ func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) error {
 	case oc.CoreTrading:
 		from = TradingAcount
 	default:
-		return fmt.Errorf("unsupported from account type: %s", account)
+		return nil, fmt.Errorf("unsupported from account type: %s", account)
 	}
 	switch account := args.GetTo(); account {
 	case oc.CoreFunding:
@@ -95,7 +97,7 @@ func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) error {
 	case oc.CoreTrading:
 		to = TradingAcount
 	default:
-		return fmt.Errorf("unsupported to account type: %s", account)
+		return nil, fmt.Errorf("unsupported to account type: %s", account)
 	}
 
 	response, err := c.api.FundsTransfer(&api.AccountTransferRequest{
@@ -105,17 +107,19 @@ func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) error {
 		Amount:   args.GetAmount(),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	debug.PrintJson(response)
-	return nil
+	return &oc.TransferStatus{
+		ID:     response.Data[0].TransferID,
+		Status: oc.OperationStatusSuccess,
+	}, nil
 }
 
 // more special static numbers okx used
 const InternalTransfer = "3"
 const OnChainTransfer = "4"
 
-func (c *Client) CreateWithdrawal(args *oc.WithdrawalArgs) error {
+func (c *Client) CreateWithdrawal(args *oc.WithdrawalArgs) (*oc.WithdrawalResponse, error) {
 	response, err := c.api.Withdrawal(&api.WithdrawalRequest{
 		Amount:      args.GetAmount().String(),
 		Destination: OnChainTransfer,
@@ -124,8 +128,10 @@ func (c *Client) CreateWithdrawal(args *oc.WithdrawalArgs) error {
 		ToAddress:   args.GetAddress(),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	debug.PrintJson(response)
-	return nil
+	return &oc.WithdrawalResponse{
+		ID:     response.Data[0].WithdrawalID,
+		Status: oc.OperationStatusPending,
+	}, nil
 }

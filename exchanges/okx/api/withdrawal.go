@@ -23,8 +23,8 @@ type WithdrawalResult struct {
 }
 
 // https://www.okx.com/docs-v5/en/#funding-account-rest-api-withdrawal
-func (c *Client) Withdrawal(args *WithdrawalRequest) (*AccountTransferResponse, error) {
-	var response AccountTransferResponse
+func (c *Client) Withdrawal(args *WithdrawalRequest) (*WithdrawalResponse, error) {
+	var response WithdrawalResponse
 	_, err := c.Request("POST", "/api/v5/asset/withdrawal", args, &response, nil)
 	if err != nil {
 		return nil, err

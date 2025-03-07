@@ -6,7 +6,7 @@ import (
 	rebal "github.com/cordialsys/offchain"
 )
 
-type GetCurrenciesResponse = Response[CurrencyInfo]
+type GetCurrenciesResponse = Response[[]CurrencyInfo]
 
 type CurrencyInfo struct {
 	BurningFeeRate       string                `json:"burningFeeRate"`

@@ -27,7 +27,7 @@ func NewWithdrawCmd() *cobra.Command {
 				return err
 			}
 
-			err = cli.CreateWithdrawal(oc.NewWithdrawalArgs(
+			resp, err := cli.CreateWithdrawal(oc.NewWithdrawalArgs(
 				oc.Address(to),
 				oc.SymbolId(symbol),
 				oc.NetworkId(network),
@@ -37,13 +37,14 @@ func NewWithdrawCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			printJson(resp)
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&from, "from", string(oc.CoreFunding), "The account to transfer from")
 	cmd.Flags().StringVar(&to, "to", "", "Your address to withdraw to")
 	cmd.Flags().StringVar(&symbol, "symbol", "", "The symbol to withdraw")
-	cmd.Flags().StringVar(&symbol, "network", "", "The network to transact on")
+	cmd.Flags().StringVar(&network, "network", "", "The network to transact on")
 	cmd.Flags().StringVar(&amountS, "amount", "", "The amount to withdraw")
 	return cmd
 }

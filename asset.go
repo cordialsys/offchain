@@ -35,8 +35,9 @@ type BalanceDetail struct {
 	// ChainId string `json:"chain_id"`
 
 	// These are the original exchange IDs
-	SymbolId  SymbolId  `json:"symbol_id"`
-	NetworkId NetworkId `json:"network_id"`
+	SymbolId SymbolId `json:"symbol_id"`
+	// often the network is not relevant, as assets can be withdrawn to multiple networks
+	NetworkId NetworkId `json:"network_id,omitempty"`
 
 	// Amount, accounted for decimals
 	Available Amount `json:"available"`

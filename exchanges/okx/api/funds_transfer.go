@@ -9,7 +9,7 @@ type AccountTransferRequest struct {
 	To       string      `json:"to"`
 }
 
-type AccountTransferResponse Response[AccountTransferResult]
+type AccountTransferResponse Response[[]AccountTransferResult]
 type AccountTransferResult struct {
 	TransferID string `json:"transId,omitempty"`
 	Currency   string `json:"ccy,omitempty"`

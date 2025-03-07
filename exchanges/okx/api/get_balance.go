@@ -6,7 +6,7 @@ import (
 	rebal "github.com/cordialsys/offchain"
 )
 
-type BalanceResponse = Response[BalanceInfo]
+type BalanceResponse = Response[[]BalanceInfo]
 
 type BalanceInfo struct {
 	AvailableBalance rebal.Amount   `json:"availBal"`

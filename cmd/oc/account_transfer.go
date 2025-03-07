@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
@@ -25,8 +27,14 @@ func NewAccountTransferCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if amount.IsZero() {
+				return fmt.Errorf("--amount must be greater than 0")
+			}
+			if symbol == "" {
+				return fmt.Errorf("--symbol is required")
+			}
 
-			err = cli.CreateAccountTransfer(oc.NewAccountTransferArgs(
+			resp, err := cli.CreateAccountTransfer(oc.NewAccountTransferArgs(
 				oc.AccountName(from),
 				oc.AccountName(to),
 				oc.SymbolId(symbol),
@@ -35,6 +43,7 @@ func NewAccountTransferCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			printJson(resp)
 			return nil
 		},
 	}

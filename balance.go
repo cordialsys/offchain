@@ -31,8 +31,8 @@ type GetBalanceArgs struct {
 	account AccountName
 }
 
-func NewGetBalanceArgs(account AccountName) *GetBalanceArgs {
-	return &GetBalanceArgs{
+func NewGetBalanceArgs(account AccountName) GetBalanceArgs {
+	return GetBalanceArgs{
 		account: account,
 	}
 }

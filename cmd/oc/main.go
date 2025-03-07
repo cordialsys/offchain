@@ -34,17 +34,34 @@ func unwrapExchangeConfig(ctx context.Context) *oc.ExchangeConfig {
 
 func NewRootCmd() *cobra.Command {
 	var configPath string
+	var exchange string
+	var verbose int
 	cmd := &cobra.Command{
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+
+			switch verbose {
+			case 0:
+				slog.SetLogLoggerLevel(slog.LevelWarn)
+			case 1:
+				slog.SetLogLoggerLevel(slog.LevelInfo)
+			case 2:
+				slog.SetLogLoggerLevel(slog.LevelDebug)
+			default:
+				slog.SetLogLoggerLevel(slog.LevelDebug)
+			}
 			config, err := loader.LoadConfig(configPath)
 			if err != nil {
 				return err
 			}
-			exchangeConfig, ok := config.GetExchange(oc.Okx)
+			if exchange == "" {
+				return fmt.Errorf("--exchange is required")
+			}
+			exchangeConfig, ok := config.GetExchange(oc.ExchangeId(exchange))
 			if !ok {
 				return fmt.Errorf("exchange not found")
 			}
+			slog.Info("Using exchange", "exchange", exchange)
 
 			ctx := cmd.Context()
 			ctx = context.WithValue(ctx, exchangeConfigKey, exchangeConfig)
@@ -60,6 +77,20 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewWithdrawCmd())
 	cmd.AddCommand(NewConfigCmd())
 
+	cmd.PersistentFlags().CountVarP(
+		&verbose,
+		"verbose",
+		"v",
+		"the verbosity level",
+	)
+
+	cmd.PersistentFlags().StringVar(
+		&exchange,
+		"exchange",
+		"",
+		"the exchange to use",
+	)
+
 	cmd.PersistentFlags().StringVar(
 		&configPath,
 		"config",
@@ -73,7 +104,6 @@ func NewRootCmd() *cobra.Command {
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	if err := NewRootCmd().Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }

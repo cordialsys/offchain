@@ -4,3 +4,6 @@ offchain:
       api_key: "env:OKX_API_KEY"
       secret_key: "env:OKX_API_SECRET"
       passphrase: "env:OKX_API_PASSPHRASE"
+    bybit:
+      api_key: "env:BYBIT_API_KEY"
+      secret_key: "env:BYBIT_API_SECRET"
