@@ -3,7 +3,7 @@ package okx
 import (
 	"fmt"
 
-	rebal "github.com/cordialsys/offchain"
+	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/exchanges/okx/api"
 	"github.com/cordialsys/offchain/pkg/debug"
 )
@@ -12,10 +12,22 @@ type Client struct {
 	api *api.Client
 }
 
-var _ rebal.Client = &Client{}
+var _ oc.Client = &Client{}
 
-func NewClient(config *rebal.ExchangeConfig) (*Client, error) {
-	api, err := api.NewClient(config.ApiKey, config.SecretKey, config.Passphrase)
+func NewClient(config *oc.ExchangeConfig) (*Client, error) {
+	apiKey, err := config.ApiKeyRef.Load()
+	if err != nil {
+		return nil, fmt.Errorf("could not load api key: %v", err)
+	}
+	secretKey, err := config.SecretKeyRef.Load()
+	if err != nil {
+		return nil, fmt.Errorf("could not load secret key: %v", err)
+	}
+	passphrase, err := config.PassphraseRef.Load()
+	if err != nil {
+		return nil, fmt.Errorf("could not load passphrase: %v", err)
+	}
+	api, err := api.NewClient(apiKey, secretKey, passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -27,30 +39,30 @@ func (c *Client) Api() *api.Client {
 	return c.api
 }
 
-func (c *Client) GetAssets() ([]*rebal.Asset, error) {
+func (c *Client) ListAssets() ([]*oc.Asset, error) {
 	response, err := c.api.GetCurrencies()
 	if err != nil {
 		return nil, err
 	}
-	assets := make([]*rebal.Asset, len(response.Data))
+	assets := make([]*oc.Asset, len(response.Data))
 	for i, currency := range response.Data {
-		assets[i] = rebal.NewAsset(
-			rebal.SymbolId(currency.Currency),
-			rebal.NetworkId(currency.Chain),
+		assets[i] = oc.NewAsset(
+			oc.SymbolId(currency.Currency),
+			oc.NetworkId(currency.Chain),
 			currency.ContractAddress,
 		)
 	}
 	return assets, nil
 }
 
-func (c *Client) GetBalances(args rebal.GetBalanceArgs) ([]*rebal.BalanceDetail, error) {
+func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, error) {
 	response, err := c.api.GetBalance(args)
 	if err != nil {
 		return nil, err
 	}
-	balances := []*rebal.BalanceDetail{}
+	balances := []*oc.BalanceDetail{}
 	for _, balance := range response.Data {
-		balances = append(balances, &rebal.BalanceDetail{
+		balances = append(balances, &oc.BalanceDetail{
 			SymbolId: balance.Currency,
 			// NA
 			NetworkId: "",
@@ -65,22 +77,22 @@ func (c *Client) GetBalances(args rebal.GetBalanceArgs) ([]*rebal.BalanceDetail,
 const FundingAcount = "6"
 const TradingAcount = "18"
 
-func (c *Client) AccountTransfer(args *rebal.AccountTransferArgs) error {
+func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) error {
 
 	from := ""
 	to := ""
 	switch account := args.GetFrom(); account {
-	case rebal.CoreFunding:
+	case oc.CoreFunding:
 		from = FundingAcount
-	case rebal.CoreTrading:
+	case oc.CoreTrading:
 		from = TradingAcount
 	default:
 		return fmt.Errorf("unsupported from account type: %s", account)
 	}
 	switch account := args.GetTo(); account {
-	case rebal.CoreFunding:
+	case oc.CoreFunding:
 		to = FundingAcount
-	case rebal.CoreTrading:
+	case oc.CoreTrading:
 		to = TradingAcount
 	default:
 		return fmt.Errorf("unsupported to account type: %s", account)
@@ -91,6 +103,25 @@ func (c *Client) AccountTransfer(args *rebal.AccountTransferArgs) error {
 		To:       to,
 		Currency: args.GetSymbol(),
 		Amount:   args.GetAmount(),
+	})
+	if err != nil {
+		return err
+	}
+	debug.PrintJson(response)
+	return nil
+}
+
+// more special static numbers okx used
+const InternalTransfer = "3"
+const OnChainTransfer = "4"
+
+func (c *Client) CreateWithdrawal(args *oc.WithdrawalArgs) error {
+	response, err := c.api.Withdrawal(&api.WithdrawalRequest{
+		Amount:      args.GetAmount().String(),
+		Destination: OnChainTransfer,
+		Currency:    args.GetSymbol(),
+		Chain:       args.GetNetwork(),
+		ToAddress:   args.GetAddress(),
 	})
 	if err != nil {
 		return err

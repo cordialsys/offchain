@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cordialsys/offchain/exchanges/okx"
+	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
 
@@ -11,13 +11,12 @@ func NewGetAssetsCmd() *cobra.Command {
 		Use:          "assets",
 		Short:        "Get the asset symbols and networks of the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			cli, err := okx.NewClient(loadFromEnv())
+			exchangeConfig := unwrapExchangeConfig(cmd.Context())
+			cli, err := loader.NewClient(exchangeConfig)
 			if err != nil {
 				return err
 			}
-
-			assets, err := cli.GetAssets()
+			assets, err := cli.ListAssets()
 			if err != nil {
 				return err
 			}

@@ -3,12 +3,17 @@ package offchain
 type ExchangeId string
 
 var (
-	Okx ExchangeId = "okx"
+	Okx     ExchangeId = "okx"
+	Binance ExchangeId = "binance"
+	Bybit   ExchangeId = "bybit"
 )
+
+var ValidExchangeIds = []ExchangeId{Okx, Binance, Bybit}
 
 type SymbolId string
 type NetworkId string
 type ContractAddress string
+type Address string
 
 type Asset struct {
 	SymbolId        SymbolId        `json:"symbol_id"`
@@ -24,13 +29,6 @@ func NewAsset(symbolId SymbolId, networkId NetworkId, contractAddress ContractAd
 	}
 }
 
-type ExchangeConfig struct {
-	ExchangeId ExchangeId
-	ApiKey     string
-	SecretKey  string
-	Passphrase string
-}
-
 type BalanceDetail struct {
 	// These are the normalized IDs (need upstream asset API to populate this)
 	// AssetId string `json:"asset_id"`
@@ -43,9 +41,4 @@ type BalanceDetail struct {
 	// Amount, accounted for decimals
 	Available Amount `json:"available"`
 	Frozen    Amount `json:"frozen"`
-}
-
-type Client interface {
-	GetAssets() ([]*Asset, error)
-	GetBalances(args GetBalanceArgs) ([]*BalanceDetail, error)
 }

@@ -1,0 +1,6 @@
+offchain:
+  exchanges:
+    okx:
+      api_key: "env:OKX_API_KEY"
+      secret_key: "env:OKX_API_SECRET"
+      passphrase: "env:OKX_API_PASSPHRASE"

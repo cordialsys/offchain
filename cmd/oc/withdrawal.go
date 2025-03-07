@@ -2,13 +2,9 @@ package main
 
 import (
 	oc "github.com/cordialsys/offchain"
-	"github.com/cordialsys/offchain/exchanges/okx"
-	"github.com/cordialsys/offchain/exchanges/okx/api"
+	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
-
-const InternalTransfer = "3"
-const OnChainTransfer = "4"
 
 func NewWithdrawCmd() *cobra.Command {
 	var from string
@@ -21,24 +17,22 @@ func NewWithdrawCmd() *cobra.Command {
 		Use:          "withdraw",
 		Short:        "Withdraw funds from the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cli, err := okx.NewClient(loadFromEnv())
+			exchangeConfig := unwrapExchangeConfig(cmd.Context())
+			cli, err := loader.NewClient(exchangeConfig)
 			if err != nil {
 				return err
 			}
-			apiokx := cli.Api()
 			amount, err := oc.NewAmountFromString(amountS)
 			if err != nil {
 				return err
 			}
 
-			response, err := apiokx.Withdrawal(&api.WithdrawalRequest{
-				Amount:      amount.String(),
-				Destination: OnChainTransfer,
-				Currency:    symbol,
-				Chain:       network,
-				ToAddress:   to,
-			})
-			printJson(response)
+			err = cli.CreateWithdrawal(oc.NewWithdrawalArgs(
+				oc.Address(to),
+				oc.SymbolId(symbol),
+				oc.NetworkId(network),
+				amount,
+			))
 
 			if err != nil {
 				return err

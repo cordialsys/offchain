@@ -2,7 +2,7 @@ package main
 
 import (
 	oc "github.com/cordialsys/offchain"
-	"github.com/cordialsys/offchain/exchanges/okx"
+	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +16,8 @@ func NewAccountTransferCmd() *cobra.Command {
 		Use:          "transfer",
 		Short:        "Transfer funds between accounts on exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cli, err := okx.NewClient(loadFromEnv())
+			exchangeConfig := unwrapExchangeConfig(cmd.Context())
+			cli, err := loader.NewClient(exchangeConfig)
 			if err != nil {
 				return err
 			}
@@ -25,7 +26,7 @@ func NewAccountTransferCmd() *cobra.Command {
 				return err
 			}
 
-			err = cli.AccountTransfer(oc.NewAccountTransferArgs(
+			err = cli.CreateAccountTransfer(oc.NewAccountTransferArgs(
 				oc.AccountName(from),
 				oc.AccountName(to),
 				oc.SymbolId(symbol),
