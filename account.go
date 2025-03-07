@@ -1,5 +1,35 @@
 package offchain
 
+import (
+	"path/filepath"
+	"strings"
+)
+
+// - accounts/funding
+// - accounts/trading
+// - accounts/x/subacounts/y
+
+// - core/funding
+// - core/trading
+// - core/margin
+
+type AccountName string
+
+var CoreFunding AccountName = "core/funding"
+var CoreTrading AccountName = "core/trading"
+var CoreMargin AccountName = "core/margin"
+
+func (name AccountName) Id() string {
+	if strings.HasPrefix(string(name), "core/") {
+		return ""
+	}
+	return strings.TrimPrefix(string(name), "accounts/")
+}
+
+func NewAccountName(id string) AccountName {
+	return AccountName(filepath.Join("accounts", id))
+}
+
 type AccountTransferArgs struct {
 	from   AccountName
 	to     AccountName
@@ -7,8 +37,8 @@ type AccountTransferArgs struct {
 	amount Amount
 }
 
-func NewAccountTransferArgs(from AccountName, to AccountName, symbol SymbolId, amount Amount) *AccountTransferArgs {
-	return &AccountTransferArgs{
+func NewAccountTransferArgs(from AccountName, to AccountName, symbol SymbolId, amount Amount) AccountTransferArgs {
+	return AccountTransferArgs{
 		from,
 		to,
 		symbol,

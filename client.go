@@ -22,6 +22,7 @@ type TransferStatus struct {
 type Client interface {
 	ListAssets() ([]*Asset, error)
 	ListBalances(args GetBalanceArgs) ([]*BalanceDetail, error)
-	CreateAccountTransfer(args *AccountTransferArgs) (*TransferStatus, error)
-	CreateWithdrawal(args *WithdrawalArgs) (*WithdrawalResponse, error)
+	CreateAccountTransfer(args AccountTransferArgs) (*TransferStatus, error)
+	CreateWithdrawal(args WithdrawalArgs) (*WithdrawalResponse, error)
+	GetDepositAddress(args GetDepositAddressArgs) (Address, error)
 }

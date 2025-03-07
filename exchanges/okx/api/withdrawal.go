@@ -3,11 +3,11 @@ package api
 import oc "github.com/cordialsys/offchain"
 
 type WithdrawalRequest struct {
-	Amount      string       `json:"amt"`
-	Destination string       `json:"dest"`
-	Currency    oc.SymbolId  `json:"ccy"`
-	Chain       oc.NetworkId `json:"chain"`
-	ToAddress   oc.Address   `json:"toAddr"`
+	Amount         string      `json:"amt"`
+	Destination    string      `json:"dest"`
+	Currency       oc.SymbolId `json:"ccy"`
+	SymbolAndChain string      `json:"chain"`
+	ToAddress      oc.Address  `json:"toAddr"`
 }
 
 type WithdrawalResponse Response[[]WithdrawalResult]

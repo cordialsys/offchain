@@ -79,7 +79,7 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 const FundingAcount = "6"
 const TradingAcount = "18"
 
-func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) (*oc.TransferStatus, error) {
+func (c *Client) CreateAccountTransfer(args oc.AccountTransferArgs) (*oc.TransferStatus, error) {
 
 	from := ""
 	to := ""
@@ -119,13 +119,13 @@ func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) (*oc.Transf
 const InternalTransfer = "3"
 const OnChainTransfer = "4"
 
-func (c *Client) CreateWithdrawal(args *oc.WithdrawalArgs) (*oc.WithdrawalResponse, error) {
+func (c *Client) CreateWithdrawal(args oc.WithdrawalArgs) (*oc.WithdrawalResponse, error) {
 	response, err := c.api.Withdrawal(&api.WithdrawalRequest{
-		Amount:      args.GetAmount().String(),
-		Destination: OnChainTransfer,
-		Currency:    args.GetSymbol(),
-		Chain:       args.GetNetwork(),
-		ToAddress:   args.GetAddress(),
+		Amount:         args.GetAmount().String(),
+		Destination:    OnChainTransfer,
+		Currency:       args.GetSymbol(),
+		SymbolAndChain: fmt.Sprintf("%s-%s", args.GetSymbol(), args.GetNetwork()),
+		ToAddress:      args.GetAddress(),
 	})
 	if err != nil {
 		return nil, err
@@ -134,4 +134,18 @@ func (c *Client) CreateWithdrawal(args *oc.WithdrawalArgs) (*oc.WithdrawalRespon
 		ID:     response.Data[0].WithdrawalID,
 		Status: oc.OperationStatusPending,
 	}, nil
+}
+
+func (c *Client) GetDepositAddress(args oc.GetDepositAddressArgs) (oc.Address, error) {
+	response, err := c.api.GetDepositAddress(args.GetSymbol())
+	if err != nil {
+		return "", err
+	}
+	expectedSymbolAndChain := fmt.Sprintf("%s-%s", args.GetSymbol(), args.GetNetwork())
+	for _, chain := range response.Data {
+		if chain.SymbolAndChain == expectedSymbolAndChain {
+			return oc.Address(chain.Address), nil
+		}
+	}
+	return "", fmt.Errorf("no deposit address found for network %s", args.GetNetwork())
 }

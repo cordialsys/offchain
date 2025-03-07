@@ -54,7 +54,6 @@ func (c *Client) Request(method, path string, input interface{}, output interfac
 	apiUrl := c.baseURL + path
 
 	log := slog.With("method", method, "url", apiUrl)
-	log.Debug("request")
 
 	var bodyStr string
 	if input != nil {
@@ -64,6 +63,7 @@ func (c *Client) Request(method, path string, input interface{}, output interfac
 		}
 		bodyStr = string(jsonBody)
 	}
+	log.Debug("request", "body", bodyStr)
 
 	timestamp := time.Now().UTC().Format("2006-01-02T15:04:05.999Z")
 	signature := c.sign(timestamp, method, path, bodyStr)

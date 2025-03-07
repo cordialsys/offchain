@@ -7,8 +7,8 @@ type WithdrawalArgs struct {
 	amount  Amount
 }
 
-func NewWithdrawalArgs(address Address, symbol SymbolId, network NetworkId, amount Amount) *WithdrawalArgs {
-	return &WithdrawalArgs{
+func NewWithdrawalArgs(address Address, symbol SymbolId, network NetworkId, amount Amount) WithdrawalArgs {
+	return WithdrawalArgs{
 		address,
 		symbol,
 		network,

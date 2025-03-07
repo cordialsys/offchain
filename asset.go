@@ -30,10 +30,6 @@ func NewAsset(symbolId SymbolId, networkId NetworkId, contractAddress ContractAd
 }
 
 type BalanceDetail struct {
-	// These are the normalized IDs (need upstream asset API to populate this)
-	// AssetId string `json:"asset_id"`
-	// ChainId string `json:"chain_id"`
-
 	// These are the original exchange IDs
 	SymbolId SymbolId `json:"symbol_id"`
 	// often the network is not relevant, as assets can be withdrawn to multiple networks

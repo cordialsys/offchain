@@ -95,7 +95,7 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 	return balances, nil
 }
 
-func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) (*oc.TransferStatus, error) {
+func (c *Client) CreateAccountTransfer(args oc.AccountTransferArgs) (*oc.TransferStatus, error) {
 	from := mapAccountName(args.GetFrom())
 	to := mapAccountName(args.GetTo())
 	coin := args.GetSymbol()
@@ -121,7 +121,7 @@ func (c *Client) CreateAccountTransfer(args *oc.AccountTransferArgs) (*oc.Transf
 	}, nil
 }
 
-func (c *Client) CreateWithdrawal(args *oc.WithdrawalArgs) (*oc.WithdrawalResponse, error) {
+func (c *Client) CreateWithdrawal(args oc.WithdrawalArgs) (*oc.WithdrawalResponse, error) {
 
 	request := api.WithdrawRequest{
 		Coin:        args.GetSymbol(),
@@ -140,4 +140,24 @@ func (c *Client) CreateWithdrawal(args *oc.WithdrawalArgs) (*oc.WithdrawalRespon
 		ID:     response.Result.ID,
 		Status: oc.OperationStatusPending,
 	}, nil
+}
+
+func (c *Client) GetDepositAddress(args oc.GetDepositAddressArgs) (oc.Address, error) {
+	var response *api.GetDepositAddressResponse
+	var err error
+	if accountId, ok := args.GetAccountId(); ok {
+		response, err = c.api.GetSubDepositAddress(accountId, args.GetSymbol(), args.GetNetwork())
+	} else {
+		response, err = c.api.GetMasterDepositAddress(args.GetSymbol(), args.GetNetwork())
+	}
+
+	if err != nil {
+		return "", err
+	}
+	for _, chain := range response.Result.Chains {
+		if chain.Chain == args.GetNetwork() {
+			return oc.Address(chain.AddressDeposit), nil
+		}
+	}
+	return "", fmt.Errorf("no deposit address found for network %s", args.GetNetwork())
 }
