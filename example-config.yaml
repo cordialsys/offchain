@@ -10,3 +10,6 @@ offchain:
     binance:
       api_key: "env:BINANCE_API_KEY"
       secret_key: "env:BINANCE_API_SECRET"
+    binanceus:
+      api_key: "env:BINANCEUS_API_KEY"
+      secret_key: "env:BINANCEUS_API_SECRET"

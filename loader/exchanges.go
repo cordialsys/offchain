@@ -8,6 +8,7 @@ import (
 
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/exchanges/binance"
+	"github.com/cordialsys/offchain/exchanges/binanceus"
 	"github.com/cordialsys/offchain/exchanges/bybit"
 	"github.com/cordialsys/offchain/exchanges/okx"
 	"github.com/cordialsys/offchain/pkg/secret"
@@ -23,6 +24,8 @@ func NewClient(config *oc.ExchangeConfig) (oc.Client, error) {
 		return bybit.NewClient(config)
 	case oc.Binance:
 		return binance.NewClient(config)
+	case oc.BinanceUS:
+		return binanceus.NewClient(config)
 	default:
 		return nil, fmt.Errorf("unsupported exchange: %s", config.ExchangeId)
 	}

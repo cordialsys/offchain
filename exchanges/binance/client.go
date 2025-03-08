@@ -70,8 +70,9 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 	return balances, nil
 }
 
+// probably should use this: https://developers.binance.com/docs/sub_account/asset-management/Universal-Transfer
+// TODO
 func (c *Client) CreateAccountTransfer(args oc.AccountTransferArgs) (*oc.TransferStatus, error) {
-
 	return nil, fmt.Errorf("not implemented")
 }
 

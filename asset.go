@@ -3,12 +3,13 @@ package offchain
 type ExchangeId string
 
 var (
-	Okx     ExchangeId = "okx"
-	Binance ExchangeId = "binance"
-	Bybit   ExchangeId = "bybit"
+	Okx       ExchangeId = "okx"
+	Binance   ExchangeId = "binance"
+	BinanceUS ExchangeId = "binanceus"
+	Bybit     ExchangeId = "bybit"
 )
 
-var ValidExchangeIds = []ExchangeId{Okx, Binance, Bybit}
+var ValidExchangeIds = []ExchangeId{Okx, Binance, BinanceUS, Bybit}
 
 type SymbolId string
 type NetworkId string
