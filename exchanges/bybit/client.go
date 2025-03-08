@@ -161,3 +161,37 @@ func (c *Client) GetDepositAddress(args oc.GetDepositAddressArgs) (oc.Address, e
 	}
 	return "", fmt.Errorf("no deposit address found for network %s", args.GetNetwork())
 }
+
+func (c *Client) ListWithdrawalHistory(args oc.WithdrawalHistoryArgs) ([]*oc.WithdrawalHistory, error) {
+	response, err := c.api.GetWithdrawalRecords(&api.WithdrawalRecordsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	history := []*oc.WithdrawalHistory{}
+	for _, record := range response.Result.Rows {
+
+		status := oc.OperationStatusPending
+		switch record.Status {
+		case api.WithdrawalStatusSuccess:
+			status = oc.OperationStatusSuccess
+		case api.WithdrawalStatusFail,
+			api.WithdrawalStatusCancelByUser,
+			api.WithdrawalStatusMoreInformationRequired,
+			api.WithdrawalStatusReject:
+			status = oc.OperationStatusFailed
+		}
+
+		history = append(history, &oc.WithdrawalHistory{
+			ID:            record.WithdrawId,
+			Status:        status,
+			Symbol:        record.Coin,
+			Network:       record.Chain,
+			Amount:        record.Amount,
+			Fee:           record.WithdrawFee,
+			TransactionId: record.TxID,
+			Comment:       string(record.Status),
+			Notes:         map[string]string{},
+		})
+	}
+	return history, nil
+}

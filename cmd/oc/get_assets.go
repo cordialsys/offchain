@@ -9,7 +9,7 @@ func NewGetAssetsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		SilenceUsage: true,
 		Use:          "assets",
-		Short:        "Get the asset symbols and networks of the exchange",
+		Short:        "list the asset symbols and networks of the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			exchangeConfig := unwrapExchangeConfig(cmd.Context())
 			cli, err := loader.NewClient(exchangeConfig)

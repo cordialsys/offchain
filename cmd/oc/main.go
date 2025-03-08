@@ -72,11 +72,12 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(NewGetAssetsCmd())
-	cmd.AddCommand(NewGetBalancesCmd())
+	cmd.AddCommand(NewListBalancesCmd())
 	cmd.AddCommand(NewAccountTransferCmd())
 	cmd.AddCommand(NewWithdrawCmd())
 	cmd.AddCommand(NewConfigCmd())
 	cmd.AddCommand(NewGetDepositAddressCmd())
+	cmd.AddCommand(NewListWithdrawalHistoryCmd())
 
 	cmd.PersistentFlags().CountVarP(
 		&verbose,

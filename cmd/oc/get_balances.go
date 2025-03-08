@@ -6,12 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewGetBalancesCmd() *cobra.Command {
+func NewListBalancesCmd() *cobra.Command {
 	var account string
 	cmd := &cobra.Command{
 		SilenceUsage: true,
 		Use:          "balances",
-		Short:        "Get the balances of the exchange",
+		Short:        "List your balances on the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			exchangeConfig := unwrapExchangeConfig(cmd.Context())
 			cli, err := loader.NewClient(exchangeConfig)

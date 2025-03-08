@@ -12,6 +12,8 @@ type Client struct {
 	api *api.Client
 }
 
+var _ oc.Client = &Client{}
+
 func NewClient(config *oc.ExchangeConfig) (*Client, error) {
 	apiKey, err := config.ApiKeyRef.Load()
 	if err != nil {
@@ -103,4 +105,36 @@ func (c *Client) GetDepositAddress(args oc.GetDepositAddressArgs) (oc.Address, e
 		return "", fmt.Errorf("failed to get deposit address: %w", err)
 	}
 	return response.Address, nil
+}
+
+func (c *Client) ListWithdrawalHistory(args oc.WithdrawalHistoryArgs) ([]*oc.WithdrawalHistory, error) {
+	response, err := c.api.GetWithdrawalHistory(&api.WithdrawalHistoryRequest{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get withdrawal history: %w", err)
+	}
+	history := []*oc.WithdrawalHistory{}
+	for _, record := range response {
+		status := oc.OperationStatusPending
+		switch record.Status {
+		case api.WithdrawalStatusCompleted:
+			status = oc.OperationStatusSuccess
+		case api.WithdrawalStatusProcessing, api.WithdrawalStatusAwaitingApproval, api.WithdrawalStatusEmailSent:
+			status = oc.OperationStatusPending
+		case api.WithdrawalStatusRejected:
+			status = oc.OperationStatusFailed
+		}
+
+		history = append(history, &oc.WithdrawalHistory{
+			ID:            record.Id,
+			Status:        status,
+			Symbol:        record.Coin,
+			Network:       record.Network,
+			Amount:        record.Amount,
+			Fee:           record.TransactionFee,
+			TransactionId: record.TxId,
+			Comment:       record.Info,
+			Notes:         map[string]string{},
+		})
+	}
+	return history, nil
 }

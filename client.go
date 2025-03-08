@@ -1,5 +1,6 @@
 package offchain
 
+type TransactionId string
 type OperationStatus string
 
 const (
@@ -19,10 +20,23 @@ type TransferStatus struct {
 	Status OperationStatus
 }
 
+type WithdrawalHistory struct {
+	ID            string            `json:"id"`
+	Status        OperationStatus   `json:"status"`
+	Symbol        SymbolId          `json:"symbol"`
+	Network       NetworkId         `json:"network"`
+	Amount        Amount            `json:"amount"`
+	Fee           Amount            `json:"fee"`
+	TransactionId TransactionId     `json:"transaction_id,omitempty"`
+	Comment       string            `json:"comment,omitempty"`
+	Notes         map[string]string `json:"notes,omitempty"`
+}
+
 type Client interface {
 	ListAssets() ([]*Asset, error)
 	ListBalances(args GetBalanceArgs) ([]*BalanceDetail, error)
 	CreateAccountTransfer(args AccountTransferArgs) (*TransferStatus, error)
 	CreateWithdrawal(args WithdrawalArgs) (*WithdrawalResponse, error)
 	GetDepositAddress(args GetDepositAddressArgs) (Address, error)
+	ListWithdrawalHistory(args WithdrawalHistoryArgs) ([]*WithdrawalHistory, error)
 }
