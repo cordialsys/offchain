@@ -67,9 +67,9 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 		balances = append(balances, &oc.BalanceDetail{
 			SymbolId: balance.Currency,
 			// NA
-			NetworkId: "",
-			Available: balance.AvailableBalance,
-			Frozen:    balance.FrozenBalance,
+			NetworkId:   "",
+			Available:   balance.AvailableBalance,
+			Unavailable: balance.FrozenBalance,
 		})
 	}
 	return balances, nil

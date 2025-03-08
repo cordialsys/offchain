@@ -36,6 +36,6 @@ type BalanceDetail struct {
 	NetworkId NetworkId `json:"network_id,omitempty"`
 
 	// Amount, accounted for decimals
-	Available Amount `json:"available"`
-	Frozen    Amount `json:"frozen"`
+	Available   Amount `json:"available"`
+	Unavailable Amount `json:"unavailable"`
 }

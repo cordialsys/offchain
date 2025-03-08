@@ -7,3 +7,6 @@ offchain:
     bybit:
       api_key: "env:BYBIT_API_KEY"
       secret_key: "env:BYBIT_API_SECRET"
+    binance:
+      api_key: "env:BINANCE_API_KEY"
+      secret_key: "env:BINANCE_API_SECRET"

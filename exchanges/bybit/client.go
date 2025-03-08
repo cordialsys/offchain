@@ -85,10 +85,10 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 		frozen := walletBalance.Sub(transferBalance)
 
 		balances = append(balances, &oc.BalanceDetail{
-			Available: oc.Amount(transferBalance),
-			Frozen:    oc.Amount(frozen),
-			SymbolId:  balance.Coin,
-			NetworkId: "",
+			Available:   oc.Amount(transferBalance),
+			Unavailable: oc.Amount(frozen),
+			SymbolId:    balance.Coin,
+			NetworkId:   "",
 		})
 	}
 
