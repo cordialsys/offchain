@@ -1,7 +1,7 @@
 package main
 
 import (
-	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
@@ -18,11 +18,11 @@ func NewListBalancesCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			accountName := oc.CoreFunding
+			accountName := client.CoreFunding
 			if account != "" {
-				accountName = oc.NewAccountName(account)
+				accountName = client.NewAccountName(account)
 			}
-			balanceArgs := oc.NewGetBalanceArgs(accountName)
+			balanceArgs := client.NewGetBalanceArgs(accountName)
 
 			assets, err := cli.ListBalances(balanceArgs)
 			if err != nil {

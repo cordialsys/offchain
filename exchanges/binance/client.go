@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/exchanges/binance/api"
 	"github.com/cordialsys/offchain/pkg/debug"
 )
@@ -12,7 +13,7 @@ type Client struct {
 	api *api.Client
 }
 
-var _ oc.Client = &Client{}
+var _ client.Client = &Client{}
 
 func NewClient(config *oc.ExchangeConfig) (*Client, error) {
 	apiKey, err := config.ApiKeyRef.Load()
@@ -49,19 +50,19 @@ func (c *Client) ListAssets() ([]*oc.Asset, error) {
 	return assets, nil
 }
 
-func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, error) {
+func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDetail, error) {
 	response, err := c.api.GetUserAsset(nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get assets: %w", err)
 	}
-	balances := make([]*oc.BalanceDetail, len(response))
+	balances := make([]*client.BalanceDetail, len(response))
 	for i, asset := range response {
 		// not sure what the difference between frozen and locked is for binance
 		frozen := asset.Freeze.Decimal()
 		locked := asset.Locked.Decimal()
 		unavailable := frozen.Add(locked)
 
-		balances[i] = &oc.BalanceDetail{
+		balances[i] = &client.BalanceDetail{
 			SymbolId:    asset.Asset,
 			Available:   asset.Free,
 			Unavailable: oc.Amount(unavailable),
@@ -72,11 +73,11 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 
 // probably should use this: https://developers.binance.com/docs/sub_account/asset-management/Universal-Transfer
 // TODO
-func (c *Client) CreateAccountTransfer(args oc.AccountTransferArgs) (*oc.TransferStatus, error) {
+func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client.TransferStatus, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (c *Client) CreateWithdrawal(args oc.WithdrawalArgs) (*oc.WithdrawalResponse, error) {
+func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.WithdrawalResponse, error) {
 	req := api.WithdrawRequest{
 		Coin:    args.GetSymbol(),
 		Network: args.GetNetwork(),
@@ -88,13 +89,13 @@ func (c *Client) CreateWithdrawal(args oc.WithdrawalArgs) (*oc.WithdrawalRespons
 	if err != nil {
 		return nil, fmt.Errorf("failed to create withdrawal: %w", err)
 	}
-	return &oc.WithdrawalResponse{
+	return &client.WithdrawalResponse{
 		ID:     response.Id,
-		Status: oc.OperationStatusPending,
+		Status: client.OperationStatusPending,
 	}, nil
 }
 
-func (c *Client) GetDepositAddress(args oc.GetDepositAddressArgs) (oc.Address, error) {
+func (c *Client) GetDepositAddress(args client.GetDepositAddressArgs) (oc.Address, error) {
 	request := api.DepositAddressRequest{
 		Coin:    args.GetSymbol(),
 		Network: args.GetNetwork(),
@@ -108,24 +109,24 @@ func (c *Client) GetDepositAddress(args oc.GetDepositAddressArgs) (oc.Address, e
 	return response.Address, nil
 }
 
-func (c *Client) ListWithdrawalHistory(args oc.WithdrawalHistoryArgs) ([]*oc.WithdrawalHistory, error) {
+func (c *Client) ListWithdrawalHistory(args client.WithdrawalHistoryArgs) ([]*client.WithdrawalHistory, error) {
 	response, err := c.api.GetWithdrawalHistory(&api.WithdrawalHistoryRequest{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get withdrawal history: %w", err)
 	}
-	history := []*oc.WithdrawalHistory{}
+	history := []*client.WithdrawalHistory{}
 	for _, record := range response {
-		status := oc.OperationStatusPending
+		status := client.OperationStatusPending
 		switch record.Status {
 		case api.WithdrawalStatusCompleted:
-			status = oc.OperationStatusSuccess
+			status = client.OperationStatusSuccess
 		case api.WithdrawalStatusProcessing, api.WithdrawalStatusAwaitingApproval, api.WithdrawalStatusEmailSent:
-			status = oc.OperationStatusPending
+			status = client.OperationStatusPending
 		case api.WithdrawalStatusRejected:
-			status = oc.OperationStatusFailed
+			status = client.OperationStatusFailed
 		}
 
-		history = append(history, &oc.WithdrawalHistory{
+		history = append(history, &client.WithdrawalHistory{
 			ID:            record.Id,
 			Status:        status,
 			Symbol:        record.Coin,

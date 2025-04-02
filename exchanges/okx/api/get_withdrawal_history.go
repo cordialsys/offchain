@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 )
 
 type WithdrawalHistoryRequest struct {
@@ -22,26 +23,26 @@ type WithdrawalHistoryRequest struct {
 type AddressExtras map[string]string
 
 type WithdrawalRecord struct {
-	Currency         oc.SymbolId      `json:"ccy"`
-	Chain            SymbolAndChain   `json:"chain"`
-	NonTradableAsset bool             `json:"nonTradableAsset"`
-	Amount           oc.Amount        `json:"amt"`
-	Timestamp        string           `json:"ts"`
-	From             string           `json:"from"`
-	AreaCodeFrom     string           `json:"areaCodeFrom"`
-	To               string           `json:"to"`
-	AreaCodeTo       string           `json:"areaCodeTo"`
-	Tag              string           `json:"tag,omitempty"`
-	PaymentId        string           `json:"pmtId,omitempty"`
-	Memo             string           `json:"memo,omitempty"`
-	AddressExtras    AddressExtras    `json:"addrEx,omitempty"`
-	TxId             oc.TransactionId `json:"txId"`
-	Fee              oc.Amount        `json:"fee"`
-	FeeCurrency      oc.SymbolId      `json:"feeCcy"`
-	State            WithdrawalState  `json:"state"`
-	WithdrawalId     string           `json:"wdId"`
-	ClientId         string           `json:"clientId"`
-	Note             string           `json:"note"`
+	Currency         oc.SymbolId          `json:"ccy"`
+	Chain            SymbolAndChain       `json:"chain"`
+	NonTradableAsset bool                 `json:"nonTradableAsset"`
+	Amount           oc.Amount            `json:"amt"`
+	Timestamp        string               `json:"ts"`
+	From             string               `json:"from"`
+	AreaCodeFrom     string               `json:"areaCodeFrom"`
+	To               string               `json:"to"`
+	AreaCodeTo       string               `json:"areaCodeTo"`
+	Tag              string               `json:"tag,omitempty"`
+	PaymentId        string               `json:"pmtId,omitempty"`
+	Memo             string               `json:"memo,omitempty"`
+	AddressExtras    AddressExtras        `json:"addrEx,omitempty"`
+	TxId             client.TransactionId `json:"txId"`
+	Fee              oc.Amount            `json:"fee"`
+	FeeCurrency      oc.SymbolId          `json:"feeCcy"`
+	State            WithdrawalState      `json:"state"`
+	WithdrawalId     string               `json:"wdId"`
+	ClientId         string               `json:"clientId"`
+	Note             string               `json:"note"`
 }
 
 type WithdrawalState string

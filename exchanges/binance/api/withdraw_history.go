@@ -8,6 +8,7 @@ import (
 	"time"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 )
 
 // WithdrawalStatus represents the status of a withdrawal
@@ -66,22 +67,22 @@ type WithdrawalHistoryRequest struct {
 }
 
 type WithdrawalRecord struct {
-	Id              string           `json:"id"`
-	Amount          oc.Amount        `json:"amount"`
-	TransactionFee  oc.Amount        `json:"transactionFee"`
-	Coin            oc.SymbolId      `json:"coin"`
-	Status          WithdrawalStatus `json:"status"`
-	Address         oc.Address       `json:"address"`
-	TxId            oc.TransactionId `json:"txId"`
-	ApplyTime       string           `json:"applyTime"`
-	Network         oc.NetworkId     `json:"network"`
-	TransferType    TransferType     `json:"transferType"`
-	WithdrawOrderId string           `json:"withdrawOrderId,omitempty"`
-	Info            string           `json:"info"`
-	ConfirmNo       int              `json:"confirmNo"`
-	WalletType      WalletType       `json:"walletType"`
-	TxKey           string           `json:"txKey"`
-	CompleteTime    string           `json:"completeTime,omitempty"`
+	Id              string               `json:"id"`
+	Amount          oc.Amount            `json:"amount"`
+	TransactionFee  oc.Amount            `json:"transactionFee"`
+	Coin            oc.SymbolId          `json:"coin"`
+	Status          WithdrawalStatus     `json:"status"`
+	Address         oc.Address           `json:"address"`
+	TxId            client.TransactionId `json:"txId"`
+	ApplyTime       string               `json:"applyTime"`
+	Network         oc.NetworkId         `json:"network"`
+	TransferType    TransferType         `json:"transferType"`
+	WithdrawOrderId string               `json:"withdrawOrderId,omitempty"`
+	Info            string               `json:"info"`
+	ConfirmNo       int                  `json:"confirmNo"`
+	WalletType      WalletType           `json:"walletType"`
+	TxKey           string               `json:"txKey"`
+	CompleteTime    string               `json:"completeTime,omitempty"`
 }
 
 // https://developers.binance.com/docs/wallet/capital/withdraw-history

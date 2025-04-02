@@ -1,8 +1,10 @@
-package offchain
+package client
 
 import (
 	"path/filepath"
 	"strings"
+
+	oc "github.com/cordialsys/offchain"
 )
 
 // - accounts/funding
@@ -33,11 +35,11 @@ func NewAccountName(id string) AccountName {
 type AccountTransferArgs struct {
 	from   AccountName
 	to     AccountName
-	symbol SymbolId
-	amount Amount
+	symbol oc.SymbolId
+	amount oc.Amount
 }
 
-func NewAccountTransferArgs(from AccountName, to AccountName, symbol SymbolId, amount Amount) AccountTransferArgs {
+func NewAccountTransferArgs(from AccountName, to AccountName, symbol oc.SymbolId, amount oc.Amount) AccountTransferArgs {
 	return AccountTransferArgs{
 		from,
 		to,
@@ -54,10 +56,10 @@ func (args *AccountTransferArgs) GetTo() AccountName {
 	return args.to
 }
 
-func (args *AccountTransferArgs) GetSymbol() SymbolId {
+func (args *AccountTransferArgs) GetSymbol() oc.SymbolId {
 	return args.symbol
 }
 
-func (args *AccountTransferArgs) GetAmount() Amount {
+func (args *AccountTransferArgs) GetAmount() oc.Amount {
 	return args.amount
 }

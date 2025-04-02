@@ -88,6 +88,11 @@ var Types = []SecretType{
 	Env, Vault, File, GcpSecretManager, AwsSecretManager, Keyring,
 }
 
+// Raw secrets should only be used for internal configuration, not external.
+func NewRawSecret(value string) Secret {
+	return Secret(fmt.Sprintf("%s:%s", Raw, value))
+}
+
 func replaceTilda(path string) string {
 	if len(path) > 1 && path[0] == '~' {
 		userHome, _ := os.UserHomeDir()

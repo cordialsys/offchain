@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/exchanges/binance"
 	"github.com/cordialsys/offchain/exchanges/binanceus"
 	"github.com/cordialsys/offchain/exchanges/bybit"
@@ -16,7 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewClient(config *oc.ExchangeConfig) (oc.Client, error) {
+func NewClient(config *oc.ExchangeConfig) (client.Client, error) {
 	switch config.ExchangeId {
 	case oc.Okx:
 		return okx.NewClient(config)
@@ -78,6 +79,12 @@ func LoadConfig(configPathMaybe string) (*Config, error) {
 		}
 		if exchange.PassphraseRef.IsType(secret.Raw) {
 			slog.Warn("raw passphrase in config file is unsafe, should use a secret manager", "exchange", key)
+		}
+	}
+	for _, exchange := range section.Offchain.Exchanges {
+		err = exchange.LoadSecrets()
+		if err != nil {
+			return nil, fmt.Errorf("could not load secrets for exchange %s: %v", exchange.ExchangeId, err)
 		}
 	}
 

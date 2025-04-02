@@ -1,0 +1,17 @@
+offchain:
+  exchanges:
+    okx:
+      # load from env
+      api_key: "env:OKX_API_KEY"
+      secret_key: "env:OKX_API_SECRET"
+      passphrase: "env:OKX_API_PASSPHRASE"
+    bybit:
+      # load from your favorite secret manager
+      api_key: "gcp:your_gcp_project,API_KEY_NAME"
+      secret_key: "gcp:your_gcp_project,API_SECRET_NAME"
+    binance:
+      # more concise, load multiple secrets either in JSON or separated by newlines
+      # E.g. `{"api_key": "...", "secret_key": "..."}`
+      secrets: "gcp:your_gcp_project,SECRETS_NAME"
+    binanceus:
+      secrets: "gcp:your_gcp_project,SECRETS_NAME"

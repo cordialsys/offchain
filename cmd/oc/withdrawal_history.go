@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ func NewListWithdrawalHistoryCmd() *cobra.Command {
 				return fmt.Errorf("--page-token is not yet supported")
 			}
 
-			resp, err := cli.ListWithdrawalHistory(oc.NewWithdrawalHistoryArgs())
+			resp, err := cli.ListWithdrawalHistory(client.NewWithdrawalHistoryArgs())
 			if err != nil {
 				return err
 			}

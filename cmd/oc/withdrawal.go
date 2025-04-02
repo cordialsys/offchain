@@ -2,6 +2,7 @@ package main
 
 import (
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +28,7 @@ func NewWithdrawCmd() *cobra.Command {
 				return err
 			}
 
-			resp, err := cli.CreateWithdrawal(oc.NewWithdrawalArgs(
+			resp, err := cli.CreateWithdrawal(client.NewWithdrawalArgs(
 				oc.Address(to),
 				oc.SymbolId(symbol),
 				oc.NetworkId(network),
@@ -41,7 +42,7 @@ func NewWithdrawCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&from, "from", string(oc.CoreFunding), "The account to transfer from")
+	cmd.Flags().StringVar(&from, "from", string(client.CoreFunding), "The account to transfer from")
 	cmd.Flags().StringVar(&to, "to", "", "Your address to withdraw to")
 	cmd.Flags().StringVar(&symbol, "symbol", "", "The symbol to withdraw")
 	cmd.Flags().StringVar(&network, "network", "", "The network to transact on")

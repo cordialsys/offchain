@@ -5,32 +5,33 @@ import (
 	"strconv"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 )
 
 type WithdrawalRecordsRequest struct {
-	WithdrawID   string           `json:"withdrawID,omitempty"`
-	TxID         oc.TransactionId `json:"txID,omitempty"`
-	Coin         *oc.SymbolId     `json:"coin,omitempty"`
-	WithdrawType *int             `json:"withdrawType,omitempty"`
-	StartTime    *int64           `json:"startTime,omitempty"`
-	EndTime      *int64           `json:"endTime,omitempty"`
-	Limit        *int             `json:"limit,omitempty"`
-	Cursor       string           `json:"cursor,omitempty"`
+	WithdrawID   string               `json:"withdrawID,omitempty"`
+	TxID         client.TransactionId `json:"txID,omitempty"`
+	Coin         *oc.SymbolId         `json:"coin,omitempty"`
+	WithdrawType *int                 `json:"withdrawType,omitempty"`
+	StartTime    *int64               `json:"startTime,omitempty"`
+	EndTime      *int64               `json:"endTime,omitempty"`
+	Limit        *int                 `json:"limit,omitempty"`
+	Cursor       string               `json:"cursor,omitempty"`
 }
 
 type WithdrawalRecord struct {
-	WithdrawId   string           `json:"withdrawId"`
-	TxID         oc.TransactionId `json:"txID"`
-	WithdrawType int              `json:"withdrawType"`
-	Coin         oc.SymbolId      `json:"coin"`
-	Chain        oc.NetworkId     `json:"chain"`
-	Amount       oc.Amount        `json:"amount"`
-	WithdrawFee  oc.Amount        `json:"withdrawFee"`
-	Status       WithdrawalStatus `json:"status"`
-	ToAddress    oc.Address       `json:"toAddress"`
-	Tag          string           `json:"tag"`
-	CreateTime   string           `json:"createTime"`
-	UpdateTime   string           `json:"updateTime"`
+	WithdrawId   string               `json:"withdrawId"`
+	TxID         client.TransactionId `json:"txID"`
+	WithdrawType int                  `json:"withdrawType"`
+	Coin         oc.SymbolId          `json:"coin"`
+	Chain        oc.NetworkId         `json:"chain"`
+	Amount       oc.Amount            `json:"amount"`
+	WithdrawFee  oc.Amount            `json:"withdrawFee"`
+	Status       WithdrawalStatus     `json:"status"`
+	ToAddress    oc.Address           `json:"toAddress"`
+	Tag          string               `json:"tag"`
+	CreateTime   string               `json:"createTime"`
+	UpdateTime   string               `json:"updateTime"`
 }
 
 // WithdrawalStatus represents the status of a withdrawal

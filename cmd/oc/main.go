@@ -78,6 +78,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewConfigCmd())
 	cmd.AddCommand(NewGetDepositAddressCmd())
 	cmd.AddCommand(NewListWithdrawalHistoryCmd())
+	cmd.AddCommand(NewSecretCmd())
 
 	cmd.PersistentFlags().CountVarP(
 		&verbose,

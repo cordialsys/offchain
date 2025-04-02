@@ -1,12 +1,16 @@
-package offchain
+package client
+
+import (
+	oc "github.com/cordialsys/offchain"
+)
 
 type GetDepositAddressArgs struct {
-	symbol       SymbolId
-	network      NetworkId
+	symbol       oc.SymbolId
+	network      oc.NetworkId
 	accountMaybe AccountName
 }
 
-func NewGetDepositAddressArgs(coin SymbolId, network NetworkId, options ...GetDepositAddressOption) GetDepositAddressArgs {
+func NewGetDepositAddressArgs(coin oc.SymbolId, network oc.NetworkId, options ...GetDepositAddressOption) GetDepositAddressArgs {
 	args := GetDepositAddressArgs{
 		coin,
 		network,
@@ -18,11 +22,11 @@ func NewGetDepositAddressArgs(coin SymbolId, network NetworkId, options ...GetDe
 	return args
 }
 
-func (args *GetDepositAddressArgs) GetSymbol() SymbolId {
+func (args *GetDepositAddressArgs) GetSymbol() oc.SymbolId {
 	return args.symbol
 }
 
-func (args *GetDepositAddressArgs) GetNetwork() NetworkId {
+func (args *GetDepositAddressArgs) GetNetwork() oc.NetworkId {
 	return args.network
 }
 

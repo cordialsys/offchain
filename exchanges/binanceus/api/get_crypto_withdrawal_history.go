@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 )
 
 type WithdrawalStatus int
@@ -54,16 +55,16 @@ type GetCryptoWithdrawalHistoryRequest struct {
 }
 
 type CryptoWithdrawalRecord struct {
-	Id             string           `json:"id"`
-	Amount         oc.Amount        `json:"amount"`
-	TransactionFee oc.Amount        `json:"transactionFee"`
-	Coin           oc.SymbolId      `json:"coin"`
-	Status         WithdrawalStatus `json:"status"`
-	Address        oc.Address       `json:"address"`
-	ApplyTime      string           `json:"applyTime"`
-	Network        oc.NetworkId     `json:"network"`
-	TransferType   int              `json:"transferType"`
-	TxId           oc.TransactionId `json:"txId"`
+	Id             string               `json:"id"`
+	Amount         oc.Amount            `json:"amount"`
+	TransactionFee oc.Amount            `json:"transactionFee"`
+	Coin           oc.SymbolId          `json:"coin"`
+	Status         WithdrawalStatus     `json:"status"`
+	Address        oc.Address           `json:"address"`
+	ApplyTime      string               `json:"applyTime"`
+	Network        oc.NetworkId         `json:"network"`
+	TransferType   int                  `json:"transferType"`
+	TxId           client.TransactionId `json:"txId"`
 }
 
 type FiatWithdrawalHistoryRequest struct {

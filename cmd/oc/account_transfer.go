@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
@@ -34,9 +35,9 @@ func NewAccountTransferCmd() *cobra.Command {
 				return fmt.Errorf("--symbol is required")
 			}
 
-			resp, err := cli.CreateAccountTransfer(oc.NewAccountTransferArgs(
-				oc.AccountName(from),
-				oc.AccountName(to),
+			resp, err := cli.CreateAccountTransfer(client.NewAccountTransferArgs(
+				client.AccountName(from),
+				client.AccountName(to),
 				oc.SymbolId(symbol),
 				amount,
 			))
@@ -47,8 +48,8 @@ func NewAccountTransferCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&from, "from", string(oc.CoreFunding), "The account to transfer from")
-	cmd.Flags().StringVar(&to, "to", string(oc.CoreTrading), "The account to transfer to")
+	cmd.Flags().StringVar(&from, "from", string(client.CoreFunding), "The account to transfer from")
+	cmd.Flags().StringVar(&to, "to", string(client.CoreTrading), "The account to transfer to")
 	cmd.Flags().StringVar(&symbol, "symbol", "", "The symbol to transfer")
 	cmd.Flags().StringVar(&amountS, "amount", "", "The amount to transfer")
 	return cmd

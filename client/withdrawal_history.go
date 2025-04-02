@@ -1,4 +1,4 @@
-package offchain
+package client
 
 type WithdrawalHistoryArgs struct {
 	limit         int

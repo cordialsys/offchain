@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
@@ -29,12 +30,12 @@ func NewGetDepositAddressCmd() *cobra.Command {
 				return fmt.Errorf("--network is required")
 			}
 
-			options := []oc.GetDepositAddressOption{}
+			options := []client.GetDepositAddressOption{}
 			if account != "" {
-				options = append(options, oc.WithAccount(oc.AccountName(account)))
+				options = append(options, client.WithAccount(client.AccountName(account)))
 			}
 
-			resp, err := cli.GetDepositAddress(oc.NewGetDepositAddressArgs(
+			resp, err := cli.GetDepositAddress(client.NewGetDepositAddressArgs(
 				oc.SymbolId(symbol),
 				oc.NetworkId(network),
 				options...,

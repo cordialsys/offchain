@@ -1,16 +1,5 @@
 package offchain
 
-type ExchangeId string
-
-var (
-	Okx       ExchangeId = "okx"
-	Binance   ExchangeId = "binance"
-	BinanceUS ExchangeId = "binanceus"
-	Bybit     ExchangeId = "bybit"
-)
-
-var ValidExchangeIds = []ExchangeId{Okx, Binance, BinanceUS, Bybit}
-
 type SymbolId string
 type NetworkId string
 type ContractAddress string
@@ -28,15 +17,4 @@ func NewAsset(symbolId SymbolId, networkId NetworkId, contractAddress ContractAd
 		NetworkId:       networkId,
 		ContractAddress: contractAddress,
 	}
-}
-
-type BalanceDetail struct {
-	// These are the original exchange IDs
-	SymbolId SymbolId `json:"symbol_id"`
-	// often the network is not relevant, as assets can be withdrawn to multiple networks
-	NetworkId NetworkId `json:"network_id,omitempty"`
-
-	// Amount, accounted for decimals
-	Available   Amount `json:"available"`
-	Unavailable Amount `json:"unavailable"`
 }

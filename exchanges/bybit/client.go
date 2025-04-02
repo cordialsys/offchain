@@ -6,6 +6,7 @@ import (
 	"time"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/exchanges/bybit/api"
 )
 
@@ -13,7 +14,7 @@ type Client struct {
 	api *api.Client
 }
 
-var _ oc.Client = &Client{}
+var _ client.Client = &Client{}
 
 func NewClient(config *oc.ExchangeConfig) (*Client, error) {
 	apiKey, err := config.ApiKeyRef.Load()
@@ -55,21 +56,21 @@ func (c *Client) ListAssets() ([]*oc.Asset, error) {
 	return assets, nil
 }
 
-func mapAccountName(name oc.AccountName) string {
+func mapAccountName(name client.AccountName) string {
 	switch name {
 	case "":
 		// default to funding
 		return api.AccountTypeFund
-	case oc.CoreFunding:
+	case client.CoreFunding:
 		return api.AccountTypeFund
-	case oc.CoreTrading:
+	case client.CoreTrading:
 		return api.AccountTypeUnified
 	default:
 		return name.Id()
 	}
 }
 
-func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, error) {
+func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDetail, error) {
 
 	accountType := mapAccountName(args.GetAccount())
 
@@ -77,14 +78,14 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 	if err != nil {
 		return nil, err
 	}
-	balances := []*oc.BalanceDetail{}
+	balances := []*client.BalanceDetail{}
 	for _, balance := range response.Result.Balance {
 
 		walletBalance := balance.WalletBalance.Decimal()
 		transferBalance := balance.TransferBalance.Decimal()
 		frozen := walletBalance.Sub(transferBalance)
 
-		balances = append(balances, &oc.BalanceDetail{
+		balances = append(balances, &client.BalanceDetail{
 			Available:   oc.Amount(transferBalance),
 			Unavailable: oc.Amount(frozen),
 			SymbolId:    balance.Coin,
@@ -95,7 +96,7 @@ func (c *Client) ListBalances(args oc.GetBalanceArgs) ([]*oc.BalanceDetail, erro
 	return balances, nil
 }
 
-func (c *Client) CreateAccountTransfer(args oc.AccountTransferArgs) (*oc.TransferStatus, error) {
+func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client.TransferStatus, error) {
 	from := mapAccountName(args.GetFrom())
 	to := mapAccountName(args.GetTo())
 	coin := args.GetSymbol()
@@ -109,19 +110,19 @@ func (c *Client) CreateAccountTransfer(args oc.AccountTransferArgs) (*oc.Transfe
 	if err != nil {
 		return nil, err
 	}
-	state := oc.OperationStatusSuccess
+	state := client.OperationStatusSuccess
 	if response.Result.Status != api.TransferStateSuccess {
 		slog.Error("transfer status unexpected", "status", response.Result.Status)
 		// assume pending as it could still occur
-		state = oc.OperationStatusPending
+		state = client.OperationStatusPending
 	}
-	return &oc.TransferStatus{
+	return &client.TransferStatus{
 		ID:     response.Result.TransferID,
 		Status: state,
 	}, nil
 }
 
-func (c *Client) CreateWithdrawal(args oc.WithdrawalArgs) (*oc.WithdrawalResponse, error) {
+func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.WithdrawalResponse, error) {
 
 	request := api.WithdrawRequest{
 		Coin:        args.GetSymbol(),
@@ -136,13 +137,13 @@ func (c *Client) CreateWithdrawal(args oc.WithdrawalArgs) (*oc.WithdrawalRespons
 	if err != nil {
 		return nil, err
 	}
-	return &oc.WithdrawalResponse{
+	return &client.WithdrawalResponse{
 		ID:     response.Result.ID,
-		Status: oc.OperationStatusPending,
+		Status: client.OperationStatusPending,
 	}, nil
 }
 
-func (c *Client) GetDepositAddress(args oc.GetDepositAddressArgs) (oc.Address, error) {
+func (c *Client) GetDepositAddress(args client.GetDepositAddressArgs) (oc.Address, error) {
 	var response *api.GetDepositAddressResponse
 	var err error
 	if accountId, ok := args.GetAccountId(); ok {
@@ -162,26 +163,26 @@ func (c *Client) GetDepositAddress(args oc.GetDepositAddressArgs) (oc.Address, e
 	return "", fmt.Errorf("no deposit address found for network %s", args.GetNetwork())
 }
 
-func (c *Client) ListWithdrawalHistory(args oc.WithdrawalHistoryArgs) ([]*oc.WithdrawalHistory, error) {
+func (c *Client) ListWithdrawalHistory(args client.WithdrawalHistoryArgs) ([]*client.WithdrawalHistory, error) {
 	response, err := c.api.GetWithdrawalRecords(&api.WithdrawalRecordsRequest{})
 	if err != nil {
 		return nil, err
 	}
-	history := []*oc.WithdrawalHistory{}
+	history := []*client.WithdrawalHistory{}
 	for _, record := range response.Result.Rows {
 
-		status := oc.OperationStatusPending
+		status := client.OperationStatusPending
 		switch record.Status {
 		case api.WithdrawalStatusSuccess:
-			status = oc.OperationStatusSuccess
+			status = client.OperationStatusSuccess
 		case api.WithdrawalStatusFail,
 			api.WithdrawalStatusCancelByUser,
 			api.WithdrawalStatusMoreInformationRequired,
 			api.WithdrawalStatusReject:
-			status = oc.OperationStatusFailed
+			status = client.OperationStatusFailed
 		}
 
-		history = append(history, &oc.WithdrawalHistory{
+		history = append(history, &client.WithdrawalHistory{
 			ID:            record.WithdrawId,
 			Status:        status,
 			Symbol:        record.Coin,
