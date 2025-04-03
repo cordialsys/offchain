@@ -54,17 +54,23 @@ func NewRootCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if exchange == "" {
-				return fmt.Errorf("--exchange is required")
-			}
-			exchangeConfig, ok := config.GetExchange(oc.ExchangeId(exchange))
-			if !ok {
-				return fmt.Errorf("exchange not found")
-			}
-			slog.Info("Using exchange", "exchange", exchange)
-
 			ctx := cmd.Context()
-			ctx = context.WithValue(ctx, exchangeConfigKey, exchangeConfig)
+
+			if exchange == "" {
+				if cmd.Name() == "start" || cmd.Name() == "config" {
+					// okay
+				} else {
+					return fmt.Errorf("--exchange is required")
+				}
+			} else {
+				exchangeConfig, ok := config.GetExchange(oc.ExchangeId(exchange))
+				if !ok {
+					return fmt.Errorf("exchange not found")
+				}
+				slog.Info("Using exchange", "exchange", exchange)
+				ctx = context.WithValue(ctx, exchangeConfigKey, exchangeConfig)
+			}
+
 			ctx = context.WithValue(ctx, configContextKey, config)
 			cmd.SetContext(ctx)
 
@@ -79,6 +85,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewGetDepositAddressCmd())
 	cmd.AddCommand(NewListWithdrawalHistoryCmd())
 	cmd.AddCommand(NewSecretCmd())
+	cmd.AddCommand(NewStartCmd())
 
 	cmd.PersistentFlags().CountVarP(
 		&verbose,
