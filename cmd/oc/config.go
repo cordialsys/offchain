@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/cordialsys/offchain/loader"
+	oc "github.com/cordialsys/offchain"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -15,7 +15,7 @@ func NewConfigCmd() *cobra.Command {
 		Use:          "config",
 		Short:        "Print out the current config",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := loader.LoadConfig(configPath)
+			config, err := oc.LoadConfig(configPath)
 			if err != nil {
 				return err
 			}
@@ -32,7 +32,7 @@ func NewConfigCmd() *cobra.Command {
 		"config",
 		"c",
 		"",
-		fmt.Sprintf("path to the config file (may set %s)", loader.ENV_OFFCHAIN_CONFIG),
+		fmt.Sprintf("path to the config file (may set %s)", oc.ENV_OFFCHAIN_CONFIG),
 	)
 	return cmd
 }

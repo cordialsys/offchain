@@ -1,0 +1,44 @@
+offchain:
+  # NOTES:
+  # For aliases, we should ensure we use common ones.  Currently:
+  # - funding
+  # - spot
+  # - trading (like spot, but potentially unified?)
+  # - cross-margin
+  # - isolated-margin
+  # - derivatives
+
+  exchanges:
+    binance:
+      # https://developers.binance.com/docs/sub_account/asset-management/Universal-Transfer
+      account_types:
+        - type: "SPOT"
+          aliases: ["spot"]
+        - type: "MARGIN"
+          aliases: ["cross-margin"]
+        - type: "ISOLATED_MARGIN"
+          aliases: ["isolated-margin"]
+        - type: "USDT_FUTURE"
+        - type: "COIN_FUTURE"
+    binanceus:
+      # _shrug_
+      # https://docs.binance.us/#get-sub-account-status-list
+      no_account_types: true
+    bybit:
+      # https://bybit-exchange.github.io/docs/v5/enum#accounttype
+      account_types:
+        - type: "UNIFIED"
+          aliases: ["trading"]
+        - type: "FUND"
+          aliases: ["funding"]
+        - type: "CONTRACT"
+          aliases: ["derivatives"]
+        - type: "SPOT"
+          aliases: ["spot"]
+    okx:
+      # https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-account-asset-valuation
+      account_types:
+        - type: "6"
+          aliases: ["funding"]
+        - type: "18"
+          aliases: ["trading"]

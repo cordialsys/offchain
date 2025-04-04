@@ -12,14 +12,14 @@ import (
 func NewGetDepositAddressCmd() *cobra.Command {
 	var symbol string
 	var network string
-	var account string
+	var subaccount string
 	cmd := &cobra.Command{
 		SilenceUsage: true,
 		Use:          "deposit",
 		Short:        "Get a deposit address for a symbol and network",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig.ExchangeId, &exchangeConfig.ExchangeClientConfig, secrets)
+			cli, err := loader.NewClient(exchangeConfig, secrets)
 			if err != nil {
 				return err
 			}
@@ -31,8 +31,8 @@ func NewGetDepositAddressCmd() *cobra.Command {
 			}
 
 			options := []client.GetDepositAddressOption{}
-			if account != "" {
-				options = append(options, client.WithAccount(client.AccountName(account)))
+			if subaccount != "" {
+				options = append(options, client.WithSubaccount(client.AccountId(subaccount)))
 			}
 
 			resp, err := cli.GetDepositAddress(client.NewGetDepositAddressArgs(
@@ -50,6 +50,6 @@ func NewGetDepositAddressCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&symbol, "symbol", "", "The symbol to withdraw")
 	cmd.Flags().StringVar(&network, "network", "", "The network to transact on")
-	cmd.Flags().StringVar(&account, "account", "", "The account to get the deposit address for (optional)")
+	cmd.Flags().StringVar(&subaccount, "for", "", "The subaccount to get the deposit address for, when using the main account to query (optional)")
 	return cmd
 }

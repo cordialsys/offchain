@@ -8,7 +8,6 @@ import (
 
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/cmd"
-	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
 
@@ -51,7 +50,7 @@ func NewExchangeCmd() *cobra.Command {
 		SilenceUsage: true,
 		PersistentPreRunE: func(preCmd *cobra.Command, args []string) error {
 			cmd.SetVerbosityFromCmd(preCmd)
-			config, err := loader.LoadConfig(configPath)
+			config, err := oc.LoadConfig(configPath)
 			if err != nil {
 				return err
 			}
@@ -103,7 +102,7 @@ func NewExchangeCmd() *cobra.Command {
 	cmd.AddCommand(NewGetDepositAddressCmd())
 	cmd.AddCommand(NewListWithdrawalHistoryCmd())
 	cmd.AddCommand(NewListSubaccountsCmd())
-
+	cmd.AddCommand(NewListAccountTypesCmd())
 	cmd.PersistentFlags().StringVarP(
 		&exchange,
 		"exchange",
@@ -125,7 +124,7 @@ func NewExchangeCmd() *cobra.Command {
 		"config",
 		"c",
 		"",
-		fmt.Sprintf("path to the config file (may set %s)", loader.ENV_OFFCHAIN_CONFIG),
+		fmt.Sprintf("path to the config file (may set %s)", oc.ENV_OFFCHAIN_CONFIG),
 	)
 
 	return cmd

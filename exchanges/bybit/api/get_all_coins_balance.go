@@ -32,7 +32,7 @@ const (
 )
 
 // https://bybit-exchange.github.io/docs/v5/asset/balance/all-balance
-func (c *Client) GetAllCoinsBalance(accountType AccountType, coinMaybe oc.SymbolId) (*GetAllCoinsBalanceResponse, error) {
+func (c *Client) GetAllCoinsBalance(accountType oc.AccountType, coinMaybe oc.SymbolId) (*GetAllCoinsBalanceResponse, error) {
 
 	params := url.Values{}
 	params.Set("accountType", string(accountType))

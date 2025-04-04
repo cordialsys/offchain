@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cordialsys/offchain/loader"
+	oc "github.com/cordialsys/offchain"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -20,15 +20,15 @@ import (
 type Server struct {
 	app    *fiber.App
 	listen string
-	conf   *loader.Config
+	conf   *oc.Config
 }
 
-func unwrapConfig(c *fiber.Ctx) *loader.Config {
-	return c.Locals("conf").(*loader.Config)
+func unwrapConfig(c *fiber.Ctx) *oc.Config {
+	return c.Locals("conf").(*oc.Config)
 }
 
 // New creates a new server instance
-func New(listen string, conf *loader.Config) *Server {
+func New(listen string, conf *oc.Config) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -89,6 +89,5 @@ func (s *Server) Start() error {
 		return fmt.Errorf("error shutting down server: %w", err)
 	}
 
-	fmt.Println("Server gracefully stopped")
 	return nil
 }

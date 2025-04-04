@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/cordialsys/offchain/loader"
+	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/server"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +15,7 @@ func NewStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Serve the offchain server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := loader.LoadConfig(configPath)
+			config, err := oc.LoadConfig(configPath)
 			if err != nil {
 				return err
 			}
@@ -28,7 +28,7 @@ func NewStartCmd() *cobra.Command {
 		"config",
 		"c",
 		"",
-		fmt.Sprintf("path to the config file (may set %s)", loader.ENV_OFFCHAIN_CONFIG),
+		fmt.Sprintf("path to the config file (may set %s)", oc.ENV_OFFCHAIN_CONFIG),
 	)
 	cmd.Flags().StringVarP(&listen, "listen", "l", ":8080", "address to listen on")
 

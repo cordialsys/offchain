@@ -33,6 +33,10 @@ type MultiSecret struct {
 
 type ExchangeClientConfig struct {
 	ApiUrl string `yaml:"api_url"`
+
+	// The account types supported by the exchange.
+	AccountTypes   []*AccountTypeConfig `yaml:"account_types"`
+	NoAccountTypes *bool                `yaml:"no_account_types,omitempty"`
 }
 
 // Main configuration for an exchange
@@ -58,6 +62,37 @@ type SubAccount struct {
 	// If it does not match, then it won't work.
 	Id          string `yaml:"id"`
 	MultiSecret `yaml:",inline"`
+}
+
+type AccountType string
+
+type AccountTypeConfig struct {
+	// The ID for the account type used by the exchange (e.g. "SPOT" or "ISOLATED_MARGIN" on binance).
+	Type AccountType `yaml:"type" json:"type"`
+	// Human readable description of the account type.
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	// Any aliases for the account type
+	Aliases []string `yaml:"aliases,omitempty" json:"aliases,omitempty"`
+}
+
+func (cfg *ExchangeConfig) ResolveAccountType(typeOrAlias string) (accountCfg *AccountTypeConfig, ok bool, message string) {
+	options := []string{}
+	for _, at := range cfg.AccountTypes {
+		if string(at.Type) == typeOrAlias {
+			return at, true, ""
+		}
+		for _, a := range at.Aliases {
+			if a == typeOrAlias {
+				return at, true, ""
+			}
+		}
+		if len(at.Aliases) > 0 {
+			options = append(options, fmt.Sprintf("%s (%s)", at.Type, at.Aliases[0]))
+		} else {
+			options = append(options, string(at.Type))
+		}
+	}
+	return nil, false, fmt.Sprintf("account type or alias %s not found for exchange %s.  Options: %s", typeOrAlias, cfg.ExchangeId, strings.Join(options, ", "))
 }
 
 func (c *MultiSecret) LoadSecrets() error {

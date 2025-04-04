@@ -6,6 +6,7 @@ import (
 	"time"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/client"
 )
 
 type AccountType string
@@ -19,14 +20,14 @@ const (
 )
 
 type UniversalTransferRequest struct {
-	FromEmail       string      `json:"fromEmail,omitempty"`
-	ToEmail         string      `json:"toEmail,omitempty"`
-	FromAccountType AccountType `json:"fromAccountType"`
-	ToAccountType   AccountType `json:"toAccountType"`
-	ClientTranId    string      `json:"clientTranId,omitempty"`
-	Symbol          oc.SymbolId `json:"symbol,omitempty"`
-	Asset           oc.SymbolId `json:"asset"`
-	Amount          oc.Amount   `json:"amount"`
+	FromEmail       client.AccountId `json:"fromEmail,omitempty"`
+	ToEmail         client.AccountId `json:"toEmail,omitempty"`
+	FromAccountType AccountType      `json:"fromAccountType"`
+	ToAccountType   AccountType      `json:"toAccountType"`
+	ClientTranId    string           `json:"clientTranId,omitempty"`
+	Symbol          oc.SymbolId      `json:"symbol,omitempty"`
+	Asset           oc.SymbolId      `json:"asset"`
+	Amount          oc.Amount        `json:"amount"`
 }
 
 type UniversalTransferResponse struct {
@@ -49,10 +50,10 @@ func (c *Client) UniversalTransfer(args *UniversalTransferRequest) (*UniversalTr
 
 	// Optional parameters
 	if args.FromEmail != "" {
-		query.Set("fromEmail", args.FromEmail)
+		query.Set("fromEmail", string(args.FromEmail))
 	}
 	if args.ToEmail != "" {
-		query.Set("toEmail", args.ToEmail)
+		query.Set("toEmail", string(args.ToEmail))
 	}
 	if args.ClientTranId != "" {
 		query.Set("clientTranId", args.ClientTranId)

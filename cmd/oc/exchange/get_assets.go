@@ -12,7 +12,7 @@ func NewGetAssetsCmd() *cobra.Command {
 		Short:        "list the asset symbols and networks of the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig.ExchangeId, &exchangeConfig.ExchangeClientConfig, secrets)
+			cli, err := loader.NewClient(exchangeConfig, secrets)
 			if err != nil {
 				return err
 			}

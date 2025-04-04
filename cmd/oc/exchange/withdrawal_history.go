@@ -16,7 +16,7 @@ func NewListWithdrawalHistoryCmd() *cobra.Command {
 		Short: "List withdrawal history",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig.ExchangeId, &exchangeConfig.ExchangeClientConfig, secrets)
+			cli, err := loader.NewClient(exchangeConfig, secrets)
 			if err != nil {
 				return err
 			}

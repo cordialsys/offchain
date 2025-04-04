@@ -55,23 +55,9 @@ func (c *Client) ListAssets() ([]*oc.Asset, error) {
 	return assets, nil
 }
 
-func mapAccountName(name client.AccountType) string {
-	// switch name {
-	// case "":
-	// default to funding
-	return api.AccountTypeFund
-	// case client.CoreFunding:
-	// 	return api.AccountTypeFund
-	// case client.CoreTrading:
-	// 	return api.AccountTypeUnified
-	// default:
-	// 	return name.Id()
-	// }
-}
-
 func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDetail, error) {
 
-	accountType := mapAccountName(args.GetAccountType())
+	accountType := args.GetAccountType()
 
 	response, err := c.api.GetAllCoinsBalance(accountType, "")
 	if err != nil {
@@ -146,8 +132,8 @@ func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.Withdrawa
 func (c *Client) GetDepositAddress(args client.GetDepositAddressArgs) (oc.Address, error) {
 	var response *api.GetDepositAddressResponse
 	var err error
-	if accountId, ok := args.GetAccountId(); ok {
-		response, err = c.api.GetSubDepositAddress(accountId, args.GetSymbol(), args.GetNetwork())
+	if accountType, ok := args.GetSubaccount(); ok {
+		response, err = c.api.GetSubDepositAddress(accountType, args.GetSymbol(), args.GetNetwork())
 	} else {
 		response, err = c.api.GetMasterDepositAddress(args.GetSymbol(), args.GetNetwork())
 	}

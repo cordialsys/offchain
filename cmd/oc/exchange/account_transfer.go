@@ -23,7 +23,7 @@ func NewAccountTransferCmd() *cobra.Command {
 		Short:        "Transfer funds between accounts on exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig.ExchangeId, &exchangeConfig.ExchangeClientConfig, secrets)
+			cli, err := loader.NewClient(exchangeConfig, secrets)
 			if err != nil {
 				return err
 			}
@@ -38,14 +38,21 @@ func NewAccountTransferCmd() *cobra.Command {
 				return fmt.Errorf("--symbol is required")
 			}
 
+			fromType, ok, message := exchangeConfig.ResolveAccountType(fromType)
+			if !ok {
+				return fmt.Errorf("%s", message)
+			}
+			toType, ok, message := exchangeConfig.ResolveAccountType(toType)
+			if !ok {
+				return fmt.Errorf("%s", message)
+			}
 			transferArgs := client.NewAccountTransferArgs(
-				// client.AccountName(from),
-				// client.AccountName(to),
 				oc.SymbolId(symbol),
 				amount,
 			)
-			transferArgs.SetFrom(client.AccountName(from), client.AccountType(fromType))
-			transferArgs.SetTo(client.AccountName(to), client.AccountType(toType))
+
+			transferArgs.SetFrom(client.AccountId(from), fromType.Type)
+			transferArgs.SetTo(client.AccountId(to), toType.Type)
 
 			resp, err := cli.CreateAccountTransfer(transferArgs)
 			if err != nil {

@@ -5,9 +5,9 @@ import (
 )
 
 type GetDepositAddressArgs struct {
-	symbol       oc.SymbolId
-	network      oc.NetworkId
-	accountMaybe AccountName
+	symbol     oc.SymbolId
+	network    oc.NetworkId
+	subaccount AccountId
 }
 
 func NewGetDepositAddressArgs(coin oc.SymbolId, network oc.NetworkId, options ...GetDepositAddressOption) GetDepositAddressArgs {
@@ -30,19 +30,18 @@ func (args *GetDepositAddressArgs) GetNetwork() oc.NetworkId {
 	return args.network
 }
 
-func (args *GetDepositAddressArgs) GetAccount() (AccountName, bool) {
-	return args.accountMaybe, args.accountMaybe != ""
-}
-
-func (args *GetDepositAddressArgs) GetAccountId() (string, bool) {
-	id := args.accountMaybe.Id()
-	return id, id != ""
+func (args *GetDepositAddressArgs) GetSubaccount() (AccountId, bool) {
+	return args.subaccount, args.subaccount != ""
 }
 
 type GetDepositAddressOption func(args *GetDepositAddressArgs)
 
-func WithAccount(account AccountName) GetDepositAddressOption {
+func WithSubaccount(subaccount AccountId) GetDepositAddressOption {
 	return func(args *GetDepositAddressArgs) {
-		args.accountMaybe = account
+		args.subaccount = subaccount
 	}
+}
+
+func (args *GetDepositAddressArgs) SetSubaccount(subaccount AccountId) {
+	args.subaccount = subaccount
 }

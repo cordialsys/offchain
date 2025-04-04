@@ -75,8 +75,8 @@ func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client
 	from, fromType := args.GetFrom()
 	to, toType := args.GetTo()
 	req := api.UniversalTransferRequest{
-		FromEmail:       from.Id(),
-		ToEmail:         to.Id(),
+		FromEmail:       from,
+		ToEmail:         to,
 		FromAccountType: api.AccountType(fromType),
 		ToAccountType:   api.AccountType(toType),
 		Asset:           args.GetSymbol(),

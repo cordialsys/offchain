@@ -15,7 +15,6 @@ func GetBalances(c *fiber.Ctx) error {
 	accountType := c.Query("type")
 	conf := unwrapConfig(c)
 
-	// TODO map accountMaybe
 	_ = accountMaybe
 
 	exchangeCfg, ok := conf.GetExchange(exchangeId)
@@ -24,8 +23,7 @@ func GetBalances(c *fiber.Ctx) error {
 	}
 
 	// Create client
-	// TODO map subaccount
-	cli, err := loader.NewClient(exchangeId, &exchangeCfg.ExchangeClientConfig, &exchangeCfg.MultiSecret)
+	cli, err := loader.NewClient(exchangeCfg, &exchangeCfg.MultiSecret)
 	if err != nil {
 		return InternalErrorf(c, "failed to create client: %s", err)
 	}
@@ -34,7 +32,7 @@ func GetBalances(c *fiber.Ctx) error {
 	if accountType == "" {
 		// accountMaybe = string(client.CoreFunding)
 	}
-	balanceArgs := client.NewGetBalanceArgs(client.AccountType(accountType))
+	balanceArgs := client.NewGetBalanceArgs(oc.AccountType(accountType))
 
 	// Get balances
 	assets, err := cli.ListBalances(balanceArgs)
