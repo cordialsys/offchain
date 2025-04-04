@@ -2,6 +2,7 @@ package okx
 
 import (
 	"fmt"
+	"log/slog"
 
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/client"
@@ -9,12 +10,13 @@ import (
 )
 
 type Client struct {
-	api *api.Client
+	api     *api.Client
+	account *oc.Account
 }
 
 var _ client.Client = &Client{}
 
-func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Client, error) {
+func NewClient(config *oc.ExchangeClientConfig, secrets *oc.Account) (*Client, error) {
 	apiKey, err := secrets.ApiKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("could not load api key: %v", err)
@@ -35,7 +37,8 @@ func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Clien
 		api.SetBaseURL(config.ApiUrl)
 	}
 	return &Client{
-		api: api,
+		api:     api,
+		account: secrets,
 	}, nil
 }
 func (c *Client) Api() *api.Client {
@@ -76,45 +79,72 @@ func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDeta
 	return balances, nil
 }
 
-// Not sure why but OKX use these static numbers to refer to the core accounts
-const FundingAcount = "6"
-const TradingAcount = "18"
-
 func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client.TransferStatus, error) {
+	from, fromType := args.GetFrom()
+	to, toType := args.GetTo()
 
-	// from := ""
-	// to := ""
-	// switch account := args.GetFrom(); account {
-	// case client.CoreFunding:
-	// 	from = FundingAcount
-	// case client.CoreTrading:
-	// 	from = TradingAcount
-	// default:
-	// 	return nil, fmt.Errorf("unsupported from account type: %s", account)
-	// }
-	// switch account := args.GetTo(); account {
-	// case client.CoreFunding:
-	// 	to = FundingAcount
-	// case client.CoreTrading:
-	// 	to = TradingAcount
-	// default:
-	// 	return nil, fmt.Errorf("unsupported to account type: %s", account)
-	// }
-
-	// response, err := c.api.FundsTransfer(&api.AccountTransferRequest{
-	// 	From:     from,
-	// 	To:       to,
-	// 	Currency: args.GetSymbol(),
-	// 	Amount:   args.GetAmount(),
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return &client.TransferStatus{
-	// 	ID:     response.Data[0].TransferID,
-	// 	Status: client.OperationStatusSuccess,
-	// }, nil
-	return nil, fmt.Errorf("not implemented")
+	if c.account.IsMain() && from != "" && to != "" {
+		// used when transferring between subaccounts (the other endpoint doesnt work for this condition)
+		res, err := c.api.SubaccountTransfer(&api.SubaccountTransferRequest{
+			Currency:       args.GetSymbol(),
+			Amount:         args.GetAmount(),
+			From:           fromType,
+			To:             toType,
+			FromSubAccount: from,
+			ToSubAccount:   to,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &client.TransferStatus{
+			ID:     res.Data[0].TransferID,
+			Status: client.OperationStatusSuccess,
+		}, nil
+	} else {
+		transferType := api.SameAccount
+		subAccountInQuestion := oc.AccountId("")
+		if from == "" && to == "" {
+			transferType = api.SameAccount
+		} else if from == "" {
+			subAccountInQuestion = to
+			transferType = api.MainToSub
+		} else if to == "" {
+			subAccountInQuestion = from
+			if c.account.IsMain() {
+				transferType = api.SubToMainUsingMain
+			} else {
+				transferType = api.SubToMainUsingSub
+			}
+		} else {
+			if c.account.IsMain() {
+				// this should not happen (other endpoint should get used for main account)
+				return nil, fmt.Errorf("unexpected main account transferring between subaccounts is not supported")
+			}
+			subAccountInQuestion = to
+			transferType = api.SubToSubUsingSub
+		}
+		slog.Debug("okx transfer", "transferType", transferType, "to", to, "from", from, "subAccountInQuestion", subAccountInQuestion)
+		req := &api.AccountTransferRequest{
+			Type:     transferType,
+			From:     fromType,
+			To:       toType,
+			Currency: args.GetSymbol(),
+			Amount:   args.GetAmount(),
+		}
+		switch transferType {
+		case api.MainToSub, api.SubToMainUsingMain, api.SubToSubUsingSub:
+			// "When type is 1/2/4, this parameter is required."
+			req.SubAccount = &subAccountInQuestion
+		}
+		res, err := c.api.FundsTransfer(req)
+		if err != nil {
+			return nil, err
+		}
+		return &client.TransferStatus{
+			ID:     res.Data[0].TransferID,
+			Status: client.OperationStatusSuccess,
+		}, nil
+	}
 }
 
 // more special static numbers okx used

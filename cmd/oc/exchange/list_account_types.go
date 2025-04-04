@@ -9,10 +9,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var NopSecrets = &oc.MultiSecret{
-	ApiKeyRef:     secret.Secret("raw:AAA"),
-	SecretKeyRef:  secret.Secret("raw:AAA"),
-	PassphraseRef: secret.Secret("raw:AAA"),
+var NopAccount = &oc.Account{
+	Id:         "",
+	SubAccount: false,
+	MultiSecret: oc.MultiSecret{
+		ApiKeyRef:     secret.Secret("raw:AAA"),
+		SecretKeyRef:  secret.Secret("raw:AAA"),
+		PassphraseRef: secret.Secret("raw:AAA"),
+	},
 }
 
 // This just reads the configuration currently, not yet exposing an API call for this.
@@ -39,7 +43,7 @@ func NewListAccountTypesCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cli, err := loader.NewClient(exchangeConfig, NopSecrets)
+			cli, err := loader.NewClient(exchangeConfig, NopAccount)
 			if err != nil {
 				return err
 			}

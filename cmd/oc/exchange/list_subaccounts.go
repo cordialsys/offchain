@@ -32,7 +32,7 @@ func NewListSubaccountsCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cli, err := loader.NewClient(exchangeConfig, NopSecrets)
+			cli, err := loader.NewClient(exchangeConfig, NopAccount)
 			if err != nil {
 				return err
 			}

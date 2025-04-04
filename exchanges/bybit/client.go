@@ -12,13 +12,13 @@ import (
 )
 
 type Client struct {
-	api *api.Client
-	cfg *oc.ExchangeClientConfig
+	api     *api.Client
+	account *oc.Account
 }
 
 var _ client.Client = &Client{}
 
-func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Client, error) {
+func NewClient(config *oc.ExchangeClientConfig, secrets *oc.Account) (*Client, error) {
 	apiKey, err := secrets.ApiKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("could not load api key: %v", err)
@@ -36,8 +36,8 @@ func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Clien
 		api.SetBaseURL(config.ApiUrl)
 	}
 	return &Client{
-		api: api,
-		cfg: config,
+		api:     api,
+		account: secrets,
 	}, nil
 }
 
@@ -103,11 +103,11 @@ func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client
 
 		if from == "" {
 			// use the main account
-			from = c.cfg.Id
+			from = c.account.Id
 		}
 		if to == "" {
 			// use the main account
-			to = c.cfg.Id
+			to = c.account.Id
 		}
 
 		fromId, err := strconv.Atoi(string(from))

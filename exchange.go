@@ -36,12 +36,16 @@ type MultiSecret struct {
 type ExchangeClientConfig struct {
 	ApiUrl string `yaml:"api_url"`
 
-	// Id of the main account, if required by the exchange.
-	Id AccountId `yaml:"id"`
-
 	// The account types supported by the exchange.
 	AccountTypes   []*AccountTypeConfig `yaml:"account_types"`
 	NoAccountTypes *bool                `yaml:"no_account_types,omitempty"`
+}
+
+type Account struct {
+	Id         AccountId
+	Alias      string
+	SubAccount bool
+	MultiSecret
 }
 
 // Main configuration for an exchange
@@ -53,6 +57,9 @@ type ExchangeConfig struct {
 	// SecretKeyRef  secret.Secret `yaml:"secret_key"`
 	// PassphraseRef secret.Secret `yaml:"passphrase"`
 	MultiSecret `yaml:",inline"`
+
+	// Id of the main account, if required by the exchange.
+	Id AccountId `yaml:"id"`
 
 	// Subaccounts are isolated accounts on an exchange.  They have their own API keys and are
 	// typically used for trading.
@@ -117,6 +124,32 @@ func (cfg *ExchangeConfig) ResolveSubAccount(idOrAlias string) (accountCfg *SubA
 		}
 	}
 	return nil, false
+}
+
+func (cfg *ExchangeConfig) AsAccount() *Account {
+	return &Account{
+		cfg.Id,
+		"",
+		false,
+		cfg.MultiSecret,
+	}
+}
+
+func (cfg *SubAccount) AsAccount() *Account {
+	return &Account{
+		cfg.Id,
+		cfg.Alias,
+		true,
+		cfg.MultiSecret,
+	}
+}
+
+func (cfg *Account) IsMain() bool {
+	return !cfg.SubAccount
+}
+
+func (cfg *Account) LoadSecrets() error {
+	return cfg.MultiSecret.LoadSecrets()
 }
 
 func (c *MultiSecret) LoadSecrets() error {

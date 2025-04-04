@@ -44,18 +44,18 @@ func (c *ClientExtra) ListSubaccounts() ([]*oc.SubAccountHeader, error) {
 	return subaccounts, nil
 }
 
-func NewClient(config *oc.ExchangeConfig, secrets *oc.MultiSecret) (Client, error) {
+func NewClient(config *oc.ExchangeConfig, account *oc.Account) (Client, error) {
 	var cli client.Client
 	var err error
 	switch config.ExchangeId {
 	case oc.Okx:
-		cli, err = okx.NewClient(&config.ExchangeClientConfig, secrets)
+		cli, err = okx.NewClient(&config.ExchangeClientConfig, account)
 	case oc.Bybit:
-		cli, err = bybit.NewClient(&config.ExchangeClientConfig, secrets)
+		cli, err = bybit.NewClient(&config.ExchangeClientConfig, account)
 	case oc.Binance:
-		cli, err = binance.NewClient(&config.ExchangeClientConfig, secrets)
+		cli, err = binance.NewClient(&config.ExchangeClientConfig, account)
 	case oc.BinanceUS:
-		cli, err = binanceus.NewClient(&config.ExchangeClientConfig, secrets)
+		cli, err = binanceus.NewClient(&config.ExchangeClientConfig, account)
 	default:
 		return nil, fmt.Errorf("unsupported exchange: %s", config.ExchangeId)
 	}
@@ -70,6 +70,20 @@ func LoadValidatedConfig(path string) (*oc.Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	// general validation
+	for _, exchange := range cfg.Exchanges {
+		subaccountAliases := map[string]bool{}
+		for _, subaccount := range exchange.SubAccounts {
+			if subaccount.Alias == "" {
+				continue
+			}
+			if _, ok := subaccountAliases[subaccount.Alias]; ok {
+				return nil, fmt.Errorf("subaccount alias %s for exchange %s is duplicated", subaccount.Alias, exchange.ExchangeId)
+			}
+			subaccountAliases[subaccount.Alias] = true
+		}
+	}
+	// per-exchange validation
 	for _, exchange := range cfg.Exchanges {
 		switch exchange.ExchangeId {
 		case oc.Bybit:

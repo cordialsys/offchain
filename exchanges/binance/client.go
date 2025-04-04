@@ -15,12 +15,12 @@ type Client struct {
 
 var _ client.Client = &Client{}
 
-func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Client, error) {
-	apiKey, err := secrets.ApiKeyRef.Load()
+func NewClient(config *oc.ExchangeClientConfig, account *oc.Account) (*Client, error) {
+	apiKey, err := account.ApiKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load api key: %w", err)
 	}
-	secretKey, err := secrets.SecretKeyRef.Load()
+	secretKey, err := account.SecretKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load secret key: %w", err)
 	}

@@ -2,11 +2,23 @@ package api
 
 import oc "github.com/cordialsys/offchain"
 
+type AccountTransferType string
+
+const (
+	SameAccount        AccountTransferType = "0"
+	MainToSub          AccountTransferType = "1"
+	SubToMainUsingMain AccountTransferType = "2"
+	SubToMainUsingSub  AccountTransferType = "3"
+	SubToSubUsingSub   AccountTransferType = "4"
+)
+
 type AccountTransferRequest struct {
-	Currency oc.SymbolId `json:"ccy"`
-	Amount   oc.Amount   `json:"amt"`
-	From     string      `json:"from"`
-	To       string      `json:"to"`
+	Currency   oc.SymbolId         `json:"ccy"`
+	Amount     oc.Amount           `json:"amt"`
+	From       oc.AccountType      `json:"from"`
+	To         oc.AccountType      `json:"to"`
+	Type       AccountTransferType `json:"type"`
+	SubAccount *oc.AccountId       `json:"subAcct,omitempty"`
 }
 
 type AccountTransferResponse Response[[]AccountTransferResult]

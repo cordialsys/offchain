@@ -21,9 +21,14 @@ func GetBalances(c *fiber.Ctx) error {
 	if !ok {
 		return NotFoundf(c, "exchange not found: %s", exchangeId)
 	}
+	account := exchangeCfg.AsAccount()
+	err := account.LoadSecrets()
+	if err != nil {
+		return InternalErrorf(c, "failed to load secrets: %s", err)
+	}
 
 	// Create client
-	cli, err := loader.NewClient(exchangeCfg, &exchangeCfg.MultiSecret)
+	cli, err := loader.NewClient(exchangeCfg, account)
 	if err != nil {
 		return InternalErrorf(c, "failed to create client: %s", err)
 	}

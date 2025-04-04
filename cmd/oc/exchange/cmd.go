@@ -30,11 +30,11 @@ func unwrapExchangeConfig(ctx context.Context) *oc.ExchangeConfig {
 	return ctx.Value(exchangeConfigKey).(*oc.ExchangeConfig)
 }
 
-func unwrapAccountSecrets(ctx context.Context) *oc.MultiSecret {
-	return ctx.Value(exchangeAccountSecretsKey).(*oc.MultiSecret)
+func unwrapAccountSecrets(ctx context.Context) *oc.Account {
+	return ctx.Value(exchangeAccountSecretsKey).(*oc.Account)
 }
 
-func unwrapAccountConfig(ctx context.Context) (*oc.ExchangeConfig, *oc.MultiSecret) {
+func unwrapAccountConfig(ctx context.Context) (*oc.ExchangeConfig, *oc.Account) {
 	exchangeConfig := unwrapExchangeConfig(ctx)
 	secrets := unwrapAccountSecrets(ctx)
 	return exchangeConfig, secrets
@@ -66,31 +66,31 @@ func NewExchangeCmd() *cobra.Command {
 			}
 			slog.Info("Using exchange", "exchange", exchange)
 			ctx = context.WithValue(ctx, exchangeConfigKey, exchangeConfig)
-			var secrets *oc.MultiSecret
+			var account *oc.Account
 
 			if subaccountId != "" {
 				for _, subaccount := range exchangeConfig.SubAccounts {
 					if string(subaccount.Id) == subaccountId || subaccount.Alias == subaccountId {
-						secrets = &subaccount.MultiSecret
+						account = subaccount.AsAccount()
 					}
 				}
-				if secrets == nil {
+				if account == nil {
 					return fmt.Errorf("subaccount %s not found in configuration for %s", subaccountId, exchange)
 				}
-				err = secrets.LoadSecrets()
+				err = account.LoadSecrets()
 				if err != nil {
 					return fmt.Errorf("could not load secrets for %s subaccount %s: %w", exchange, subaccountId, err)
 				}
 			} else {
-				secrets = &exchangeConfig.MultiSecret
-				err = secrets.LoadSecrets()
+				account = exchangeConfig.AsAccount()
+				err = account.LoadSecrets()
 				if err != nil {
 					return fmt.Errorf("could not load secrets for %s: %w", exchange, err)
 				}
 			}
 
 			ctx = context.WithValue(ctx, configContextKey, config)
-			ctx = context.WithValue(ctx, exchangeAccountSecretsKey, secrets)
+			ctx = context.WithValue(ctx, exchangeAccountSecretsKey, account)
 			preCmd.SetContext(ctx)
 
 			return nil
