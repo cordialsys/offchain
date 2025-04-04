@@ -1,4 +1,4 @@
-package main
+package exchange
 
 import (
 	"github.com/cordialsys/offchain/loader"
@@ -11,8 +11,8 @@ func NewGetAssetsCmd() *cobra.Command {
 		Use:          "assets",
 		Short:        "list the asset symbols and networks of the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			exchangeConfig := unwrapExchangeConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig)
+			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
+			cli, err := loader.NewClient(exchangeConfig.ExchangeId, &exchangeConfig.ExchangeClientConfig, secrets)
 			if err != nil {
 				return err
 			}

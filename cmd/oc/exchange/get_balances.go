@@ -1,4 +1,4 @@
-package main
+package exchange
 
 import (
 	"github.com/cordialsys/offchain/client"
@@ -13,16 +13,16 @@ func NewListBalancesCmd() *cobra.Command {
 		Use:          "balances",
 		Short:        "List your balances on the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			exchangeConfig := unwrapExchangeConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig)
+			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
+			cli, err := loader.NewClient(exchangeConfig.ExchangeId, &exchangeConfig.ExchangeClientConfig, secrets)
 			if err != nil {
 				return err
 			}
-			accountName := client.CoreFunding
+			accountType := client.AccountType("") //client.CoreFunding
 			if account != "" {
-				accountName = client.NewAccountName(account)
+				accountType = client.AccountType(account)
 			}
-			balanceArgs := client.NewGetBalanceArgs(accountName)
+			balanceArgs := client.NewGetBalanceArgs(accountType)
 
 			assets, err := cli.ListBalances(balanceArgs)
 			if err != nil {

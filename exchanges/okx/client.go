@@ -14,16 +14,16 @@ type Client struct {
 
 var _ client.Client = &Client{}
 
-func NewClient(config *oc.ExchangeConfig) (*Client, error) {
-	apiKey, err := config.ApiKeyRef.Load()
+func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Client, error) {
+	apiKey, err := secrets.ApiKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("could not load api key: %v", err)
 	}
-	secretKey, err := config.SecretKeyRef.Load()
+	secretKey, err := secrets.SecretKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("could not load secret key: %v", err)
 	}
-	passphrase, err := config.PassphraseRef.Load()
+	passphrase, err := secrets.PassphraseRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("could not load passphrase: %v", err)
 	}
@@ -82,38 +82,39 @@ const TradingAcount = "18"
 
 func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client.TransferStatus, error) {
 
-	from := ""
-	to := ""
-	switch account := args.GetFrom(); account {
-	case client.CoreFunding:
-		from = FundingAcount
-	case client.CoreTrading:
-		from = TradingAcount
-	default:
-		return nil, fmt.Errorf("unsupported from account type: %s", account)
-	}
-	switch account := args.GetTo(); account {
-	case client.CoreFunding:
-		to = FundingAcount
-	case client.CoreTrading:
-		to = TradingAcount
-	default:
-		return nil, fmt.Errorf("unsupported to account type: %s", account)
-	}
+	// from := ""
+	// to := ""
+	// switch account := args.GetFrom(); account {
+	// case client.CoreFunding:
+	// 	from = FundingAcount
+	// case client.CoreTrading:
+	// 	from = TradingAcount
+	// default:
+	// 	return nil, fmt.Errorf("unsupported from account type: %s", account)
+	// }
+	// switch account := args.GetTo(); account {
+	// case client.CoreFunding:
+	// 	to = FundingAcount
+	// case client.CoreTrading:
+	// 	to = TradingAcount
+	// default:
+	// 	return nil, fmt.Errorf("unsupported to account type: %s", account)
+	// }
 
-	response, err := c.api.FundsTransfer(&api.AccountTransferRequest{
-		From:     from,
-		To:       to,
-		Currency: args.GetSymbol(),
-		Amount:   args.GetAmount(),
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &client.TransferStatus{
-		ID:     response.Data[0].TransferID,
-		Status: client.OperationStatusSuccess,
-	}, nil
+	// response, err := c.api.FundsTransfer(&api.AccountTransferRequest{
+	// 	From:     from,
+	// 	To:       to,
+	// 	Currency: args.GetSymbol(),
+	// 	Amount:   args.GetAmount(),
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return &client.TransferStatus{
+	// 	ID:     response.Data[0].TransferID,
+	// 	Status: client.OperationStatusSuccess,
+	// }, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 // more special static numbers okx used

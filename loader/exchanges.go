@@ -17,18 +17,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func NewClient(config *oc.ExchangeConfig) (client.Client, error) {
-	switch config.ExchangeId {
+func NewClient(exchangeId oc.ExchangeId, config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (client.Client, error) {
+
+	switch exchangeId {
 	case oc.Okx:
-		return okx.NewClient(config)
+		return okx.NewClient(config, secrets)
 	case oc.Bybit:
-		return bybit.NewClient(config)
+		return bybit.NewClient(config, secrets)
 	case oc.Binance:
-		return binance.NewClient(config)
+		return binance.NewClient(config, secrets)
 	case oc.BinanceUS:
-		return binanceus.NewClient(config)
+		return binanceus.NewClient(config, secrets)
 	default:
-		return nil, fmt.Errorf("unsupported exchange: %s", config.ExchangeId)
+		return nil, fmt.Errorf("unsupported exchange: %s", exchangeId)
 	}
 }
 
@@ -79,12 +80,6 @@ func LoadConfig(configPathMaybe string) (*Config, error) {
 		}
 		if exchange.PassphraseRef.IsType(secret.Raw) {
 			slog.Warn("raw passphrase in config file is unsafe, should use a secret manager", "exchange", key)
-		}
-	}
-	for _, exchange := range section.Offchain.Exchanges {
-		err = exchange.LoadSecrets()
-		if err != nil {
-			return nil, fmt.Errorf("could not load secrets for exchange %s: %v", exchange.ExchangeId, err)
 		}
 	}
 

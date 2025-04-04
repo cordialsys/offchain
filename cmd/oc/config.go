@@ -9,12 +9,16 @@ import (
 )
 
 func NewConfigCmd() *cobra.Command {
+	var configPath string
 	cmd := &cobra.Command{
 		SilenceUsage: true,
 		Use:          "config",
 		Short:        "Print out the current config",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config := cmd.Context().Value(configContextKey).(*loader.Config)
+			config, err := loader.LoadConfig(configPath)
+			if err != nil {
+				return err
+			}
 			out, err := yaml.Marshal(config)
 			if err != nil {
 				return err
@@ -23,5 +27,12 @@ func NewConfigCmd() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().StringVarP(
+		&configPath,
+		"config",
+		"c",
+		"",
+		fmt.Sprintf("path to the config file (may set %s)", loader.ENV_OFFCHAIN_CONFIG),
+	)
 	return cmd
 }

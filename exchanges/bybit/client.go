@@ -2,7 +2,6 @@ package bybit
 
 import (
 	"fmt"
-	"log/slog"
 	"time"
 
 	oc "github.com/cordialsys/offchain"
@@ -16,12 +15,12 @@ type Client struct {
 
 var _ client.Client = &Client{}
 
-func NewClient(config *oc.ExchangeConfig) (*Client, error) {
-	apiKey, err := config.ApiKeyRef.Load()
+func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Client, error) {
+	apiKey, err := secrets.ApiKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("could not load api key: %v", err)
 	}
-	secretKey, err := config.SecretKeyRef.Load()
+	secretKey, err := secrets.SecretKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("could not load secret key: %v", err)
 	}
@@ -56,23 +55,23 @@ func (c *Client) ListAssets() ([]*oc.Asset, error) {
 	return assets, nil
 }
 
-func mapAccountName(name client.AccountName) string {
-	switch name {
-	case "":
-		// default to funding
-		return api.AccountTypeFund
-	case client.CoreFunding:
-		return api.AccountTypeFund
-	case client.CoreTrading:
-		return api.AccountTypeUnified
-	default:
-		return name.Id()
-	}
+func mapAccountName(name client.AccountType) string {
+	// switch name {
+	// case "":
+	// default to funding
+	return api.AccountTypeFund
+	// case client.CoreFunding:
+	// 	return api.AccountTypeFund
+	// case client.CoreTrading:
+	// 	return api.AccountTypeUnified
+	// default:
+	// 	return name.Id()
+	// }
 }
 
 func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDetail, error) {
 
-	accountType := mapAccountName(args.GetAccount())
+	accountType := mapAccountName(args.GetAccountType())
 
 	response, err := c.api.GetAllCoinsBalance(accountType, "")
 	if err != nil {
@@ -97,29 +96,30 @@ func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDeta
 }
 
 func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client.TransferStatus, error) {
-	from := mapAccountName(args.GetFrom())
-	to := mapAccountName(args.GetTo())
-	coin := args.GetSymbol()
-	amount := args.GetAmount()
+	// from := mapAccountName(args.GetFrom())
+	// to := mapAccountName(args.GetTo())
+	// coin := args.GetSymbol()
+	// amount := args.GetAmount()
 
-	if amount.IsZero() {
-		return nil, fmt.Errorf("amount must be greater than 0")
-	}
+	// if amount.IsZero() {
+	// 	return nil, fmt.Errorf("amount must be greater than 0")
+	// }
 
-	response, err := c.api.CreateInternalTransfer(coin, amount, from, to)
-	if err != nil {
-		return nil, err
-	}
-	state := client.OperationStatusSuccess
-	if response.Result.Status != api.TransferStateSuccess {
-		slog.Error("transfer status unexpected", "status", response.Result.Status)
-		// assume pending as it could still occur
-		state = client.OperationStatusPending
-	}
-	return &client.TransferStatus{
-		ID:     response.Result.TransferID,
-		Status: state,
-	}, nil
+	// response, err := c.api.CreateInternalTransfer(coin, amount, from, to)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// state := client.OperationStatusSuccess
+	// if response.Result.Status != api.TransferStateSuccess {
+	// 	slog.Error("transfer status unexpected", "status", response.Result.Status)
+	// 	// assume pending as it could still occur
+	// 	state = client.OperationStatusPending
+	// }
+	// return &client.TransferStatus{
+	// 	ID:     response.Result.TransferID,
+	// 	Status: state,
+	// }, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.WithdrawalResponse, error) {

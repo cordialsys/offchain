@@ -16,10 +16,11 @@ import (
 // - core/margin
 
 type AccountName string
+type AccountType string
 
-var CoreFunding AccountName = "core/funding"
-var CoreTrading AccountName = "core/trading"
-var CoreMargin AccountName = "core/margin"
+// var CoreFunding AccountName = "core/funding"
+// var CoreTrading AccountName = "core/trading"
+// var CoreMargin AccountName = "core/margin"
 
 func (name AccountName) Id() string {
 	if strings.HasPrefix(string(name), "core/") {
@@ -33,27 +34,43 @@ func NewAccountName(id string) AccountName {
 }
 
 type AccountTransferArgs struct {
-	from   AccountName
-	to     AccountName
+	from AccountName
+	to   AccountName
+
+	fromType AccountType
+	toType   AccountType
+
 	symbol oc.SymbolId
 	amount oc.Amount
 }
 
-func NewAccountTransferArgs(from AccountName, to AccountName, symbol oc.SymbolId, amount oc.Amount) AccountTransferArgs {
+func NewAccountTransferArgs(symbol oc.SymbolId, amount oc.Amount) AccountTransferArgs {
 	return AccountTransferArgs{
-		from,
-		to,
+		"",
+		"",
+		"",
+		"",
 		symbol,
 		amount,
 	}
 }
 
-func (args *AccountTransferArgs) GetFrom() AccountName {
-	return args.from
+func (args *AccountTransferArgs) SetFrom(from AccountName, fromType AccountType) {
+	args.from = from
+	args.fromType = fromType
 }
 
-func (args *AccountTransferArgs) GetTo() AccountName {
-	return args.to
+func (args *AccountTransferArgs) SetTo(to AccountName, toType AccountType) {
+	args.to = to
+	args.toType = toType
+}
+
+func (args *AccountTransferArgs) GetFrom() (AccountName, AccountType) {
+	return args.from, args.fromType
+}
+
+func (args *AccountTransferArgs) GetTo() (AccountName, AccountType) {
+	return args.to, args.toType
 }
 
 func (args *AccountTransferArgs) GetSymbol() oc.SymbolId {

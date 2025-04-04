@@ -15,12 +15,12 @@ type Client struct {
 
 var _ client.Client = &Client{}
 
-func NewClient(config *oc.ExchangeConfig) (*Client, error) {
-	apiKey, err := config.ApiKeyRef.Load()
+func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Client, error) {
+	apiKey, err := secrets.ApiKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load api key: %w", err)
 	}
-	secretKey, err := config.SecretKeyRef.Load()
+	secretKey, err := secrets.SecretKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load secret key: %w", err)
 	}
@@ -71,10 +71,26 @@ func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDeta
 	return balances, nil
 }
 
-// probably should use this: https://developers.binance.com/docs/sub_account/asset-management/Universal-Transfer
-// TODO
 func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client.TransferStatus, error) {
-	return nil, fmt.Errorf("not implemented")
+	from, fromType := args.GetFrom()
+	to, toType := args.GetTo()
+	req := api.UniversalTransferRequest{
+		FromEmail:       from.Id(),
+		ToEmail:         to.Id(),
+		FromAccountType: api.AccountType(fromType),
+		ToAccountType:   api.AccountType(toType),
+		Asset:           args.GetSymbol(),
+		Amount:          args.GetAmount(),
+	}
+
+	response, err := c.api.UniversalTransfer(&req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create account transfer: %w", err)
+	}
+	return &client.TransferStatus{
+		ID:     fmt.Sprintf("%d", response.TranId),
+		Status: client.OperationStatusSuccess,
+	}, nil
 }
 
 func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.WithdrawalResponse, error) {

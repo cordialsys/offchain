@@ -1,4 +1,4 @@
-package main
+package exchange
 
 import (
 	oc "github.com/cordialsys/offchain"
@@ -18,8 +18,8 @@ func NewWithdrawCmd() *cobra.Command {
 		Use:          "withdraw",
 		Short:        "Withdraw funds from the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			exchangeConfig := unwrapExchangeConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig)
+			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
+			cli, err := loader.NewClient(exchangeConfig.ExchangeId, &exchangeConfig.ExchangeClientConfig, secrets)
 			if err != nil {
 				return err
 			}
@@ -42,7 +42,7 @@ func NewWithdrawCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&from, "from", string(client.CoreFunding), "The account to transfer from")
+	cmd.Flags().StringVar(&from, "from", string(""), "The account to transfer from")
 	cmd.Flags().StringVar(&to, "to", "", "Your address to withdraw to")
 	cmd.Flags().StringVar(&symbol, "symbol", "", "The symbol to withdraw")
 	cmd.Flags().StringVar(&network, "network", "", "The network to transact on")

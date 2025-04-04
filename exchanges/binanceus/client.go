@@ -15,12 +15,12 @@ type Client struct {
 
 var _ client.Client = &Client{}
 
-func NewClient(config *oc.ExchangeConfig) (*Client, error) {
-	apiKey, err := config.ApiKeyRef.Load()
+func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Client, error) {
+	apiKey, err := secrets.ApiKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load api key: %w", err)
 	}
-	secretKey, err := config.SecretKeyRef.Load()
+	secretKey, err := secrets.SecretKeyRef.Load()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load secret key: %w", err)
 	}
@@ -71,20 +71,21 @@ func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDeta
 }
 
 func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client.TransferStatus, error) {
-	response, err := c.api.SubAccountTransfer(&api.SubAccountTransferRequest{
-		FromEmail:       args.GetFrom().Id(),
-		ToEmail:         args.GetTo().Id(),
-		Asset:           args.GetSymbol(),
-		Amount:          args.GetAmount(),
-		TimestampMillis: time.Now().UnixMilli(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create account transfer: %w", err)
-	}
-	return &client.TransferStatus{
-		ID:     response.TxnId,
-		Status: client.OperationStatusSuccess,
-	}, nil
+	// response, err := c.api.SubAccountTransfer(&api.SubAccountTransferRequest{
+	// 	FromEmail:       args.GetFrom().Id(),
+	// 	ToEmail:         args.GetTo().Id(),
+	// 	Asset:           args.GetSymbol(),
+	// 	Amount:          args.GetAmount(),
+	// 	TimestampMillis: time.Now().UnixMilli(),
+	// })
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create account transfer: %w", err)
+	// }
+	// return &client.TransferStatus{
+	// 	ID:     response.TxnId,
+	// 	Status: client.OperationStatusSuccess,
+	// }, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.WithdrawalResponse, error) {

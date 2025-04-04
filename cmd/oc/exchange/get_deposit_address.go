@@ -1,4 +1,4 @@
-package main
+package exchange
 
 import (
 	"fmt"
@@ -18,8 +18,8 @@ func NewGetDepositAddressCmd() *cobra.Command {
 		Use:          "deposit",
 		Short:        "Get a deposit address for a symbol and network",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			exchangeConfig := unwrapExchangeConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig)
+			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
+			cli, err := loader.NewClient(exchangeConfig.ExchangeId, &exchangeConfig.ExchangeClientConfig, secrets)
 			if err != nil {
 				return err
 			}

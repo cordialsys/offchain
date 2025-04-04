@@ -1,14 +1,13 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
 
-	oc "github.com/cordialsys/offchain"
-	"github.com/cordialsys/offchain/loader"
+	"github.com/cordialsys/offchain/cmd"
+	"github.com/cordialsys/offchain/cmd/oc/exchange"
 	"github.com/spf13/cobra"
 )
 
@@ -20,92 +19,28 @@ func printJson(data interface{}) {
 	fmt.Println(string(bz))
 }
 
-const XcSolAddress = "8Rub84DA2L6BH2FVKzVBxD7jp1i6o1BtrCunm51hQcg2"
-const OkxSolAddress = "CHMcJTRFxjBpcNTsfkXtckjVCqEyR6ESAhuV9tFQC3WE"
-
-type contextKey string
-
-const exchangeConfigKey contextKey = "exchange_config"
-const configContextKey contextKey = "config"
-
-func unwrapExchangeConfig(ctx context.Context) *oc.ExchangeConfig {
-	return ctx.Value(exchangeConfigKey).(*oc.ExchangeConfig)
-}
-
 func NewRootCmd() *cobra.Command {
-	var configPath string
-	var exchange string
 	var verbose int
 	cmd := &cobra.Command{
 		SilenceUsage: true,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmdPre *cobra.Command, args []string) error {
+			cmd.SetVerbosity(verbose)
 
-			switch verbose {
-			case 0:
-				slog.SetLogLoggerLevel(slog.LevelWarn)
-			case 1:
-				slog.SetLogLoggerLevel(slog.LevelInfo)
-			case 2:
-				slog.SetLogLoggerLevel(slog.LevelDebug)
-			default:
-				slog.SetLogLoggerLevel(slog.LevelDebug)
-			}
-			config, err := loader.LoadConfig(configPath)
-			if err != nil {
-				return err
-			}
-			ctx := cmd.Context()
-
-			if exchange == "" {
-				if cmd.Name() == "start" || cmd.Name() == "config" {
-					// okay
-				} else {
-					return fmt.Errorf("--exchange is required")
-				}
-			} else {
-				exchangeConfig, ok := config.GetExchange(oc.ExchangeId(exchange))
-				if !ok {
-					return fmt.Errorf("exchange not found")
-				}
-				slog.Info("Using exchange", "exchange", exchange)
-				ctx = context.WithValue(ctx, exchangeConfigKey, exchangeConfig)
-			}
-
-			ctx = context.WithValue(ctx, configContextKey, config)
-			cmd.SetContext(ctx)
+			ctx := cmdPre.Context()
+			cmdPre.SetContext(ctx)
 
 			return nil
 		},
 	}
-	cmd.AddCommand(NewGetAssetsCmd())
-	cmd.AddCommand(NewListBalancesCmd())
-	cmd.AddCommand(NewAccountTransferCmd())
-	cmd.AddCommand(NewWithdrawCmd())
 	cmd.AddCommand(NewConfigCmd())
-	cmd.AddCommand(NewGetDepositAddressCmd())
-	cmd.AddCommand(NewListWithdrawalHistoryCmd())
 	cmd.AddCommand(NewSecretCmd())
 	cmd.AddCommand(NewStartCmd())
-
+	cmd.AddCommand(exchange.NewExchangeCmd())
 	cmd.PersistentFlags().CountVarP(
 		&verbose,
 		"verbose",
 		"v",
 		"the verbosity level",
-	)
-
-	cmd.PersistentFlags().StringVar(
-		&exchange,
-		"exchange",
-		"",
-		"the exchange to use",
-	)
-
-	cmd.PersistentFlags().StringVar(
-		&configPath,
-		"config",
-		"",
-		fmt.Sprintf("path to the config file (may set %s)", loader.ENV_OFFCHAIN_CONFIG),
 	)
 
 	return cmd

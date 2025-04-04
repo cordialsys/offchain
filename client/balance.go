@@ -1,15 +1,15 @@
 package client
 
 type GetBalanceArgs struct {
-	account AccountName
+	accountType AccountType
 }
 
-func NewGetBalanceArgs(account AccountName) GetBalanceArgs {
+func NewGetBalanceArgs(accountType AccountType) GetBalanceArgs {
 	return GetBalanceArgs{
-		account: account,
+		accountType: accountType,
 	}
 }
 
-func (args *GetBalanceArgs) GetAccount() AccountName {
-	return args.account
+func (args *GetBalanceArgs) GetAccountType() AccountType {
+	return args.accountType
 }

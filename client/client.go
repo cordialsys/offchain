@@ -48,10 +48,21 @@ type WithdrawalHistory struct {
 }
 
 type Client interface {
+	// List all of the support assets on the exchange
 	ListAssets() ([]*oc.Asset, error)
+
+	// List of all of the balances on an account
 	ListBalances(args GetBalanceArgs) ([]*BalanceDetail, error)
+
+	// Create a transfer between accounts (e.g. main to sub, sub to sub, etc) on the exchange
 	CreateAccountTransfer(args AccountTransferArgs) (*TransferStatus, error)
+
+	// Withdraw funds to an external wallet
 	CreateWithdrawal(args WithdrawalArgs) (*WithdrawalResponse, error)
+
+	// Get a deposit address for an asset
 	GetDepositAddress(args GetDepositAddressArgs) (oc.Address, error)
+
+	// List paginated withdrawal history on an account in descending order
 	ListWithdrawalHistory(args WithdrawalHistoryArgs) ([]*WithdrawalHistory, error)
 }
