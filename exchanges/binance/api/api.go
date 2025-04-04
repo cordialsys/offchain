@@ -46,7 +46,7 @@ func (c *Client) Request(method, path string, input interface{}, output interfac
 	method = strings.ToUpper(method)
 	apiUrl := c.baseURL + path
 
-	log := slog.With("method", method, "url", apiUrl)
+	log := slog.With("method", method, "url", apiUrl, "query", query)
 
 	// Initialize query parameters if nil
 	if query == nil {

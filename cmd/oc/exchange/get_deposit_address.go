@@ -32,7 +32,7 @@ func NewGetDepositAddressCmd() *cobra.Command {
 
 			options := []client.GetDepositAddressOption{}
 			if subaccount != "" {
-				options = append(options, client.WithSubaccount(client.AccountId(subaccount)))
+				options = append(options, client.WithSubaccount(oc.AccountId(subaccount)))
 			}
 
 			resp, err := cli.GetDepositAddress(client.NewGetDepositAddressArgs(

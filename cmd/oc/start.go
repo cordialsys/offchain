@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/loader"
 	"github.com/cordialsys/offchain/server"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +16,7 @@ func NewStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Serve the offchain server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := oc.LoadConfig(configPath)
+			config, err := loader.LoadValidatedConfig(configPath)
 			if err != nil {
 				return err
 			}

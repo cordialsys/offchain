@@ -4,11 +4,10 @@ import (
 	"net/url"
 
 	oc "github.com/cordialsys/offchain"
-	"github.com/cordialsys/offchain/client"
 )
 
 // https://bybit-exchange.github.io/docs/v5/asset/deposit/sub-deposit-addr
-func (c *Client) GetSubDepositAddress(accountId client.AccountId, coin oc.SymbolId, network oc.NetworkId) (*GetDepositAddressResponse, error) {
+func (c *Client) GetSubDepositAddress(accountId oc.AccountId, coin oc.SymbolId, network oc.NetworkId) (*GetDepositAddressResponse, error) {
 	params := url.Values{}
 	params.Set("coin", string(coin))
 	params.Set("chainType", string(network))

@@ -2,6 +2,8 @@ package bybit
 
 import (
 	"fmt"
+	"log/slog"
+	"strconv"
 	"time"
 
 	oc "github.com/cordialsys/offchain"
@@ -11,6 +13,7 @@ import (
 
 type Client struct {
 	api *api.Client
+	cfg *oc.ExchangeClientConfig
 }
 
 var _ client.Client = &Client{}
@@ -34,6 +37,7 @@ func NewClient(config *oc.ExchangeClientConfig, secrets *oc.MultiSecret) (*Clien
 	}
 	return &Client{
 		api: api,
+		cfg: config,
 	}, nil
 }
 
@@ -82,30 +86,62 @@ func (c *Client) ListBalances(args client.GetBalanceArgs) ([]*client.BalanceDeta
 }
 
 func (c *Client) CreateAccountTransfer(args client.AccountTransferArgs) (*client.TransferStatus, error) {
-	// from := mapAccountName(args.GetFrom())
-	// to := mapAccountName(args.GetTo())
-	// coin := args.GetSymbol()
-	// amount := args.GetAmount()
+	var err error
+	var response *api.TransferResponse
 
-	// if amount.IsZero() {
-	// 	return nil, fmt.Errorf("amount must be greater than 0")
-	// }
+	if args.IsSameAccount() {
+		// apparently the 'universal' transfer doesn't work for transfers in the same account
+		_, fromType := args.GetFrom()
+		_, toType := args.GetTo()
+		response, err = c.api.CreateInternalTransfer(args.GetSymbol(), args.GetAmount(), fromType, toType)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		from, fromType := args.GetFrom()
+		to, toType := args.GetTo()
 
-	// response, err := c.api.CreateInternalTransfer(coin, amount, from, to)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// state := client.OperationStatusSuccess
-	// if response.Result.Status != api.TransferStateSuccess {
-	// 	slog.Error("transfer status unexpected", "status", response.Result.Status)
-	// 	// assume pending as it could still occur
-	// 	state = client.OperationStatusPending
-	// }
-	// return &client.TransferStatus{
-	// 	ID:     response.Result.TransferID,
-	// 	Status: state,
-	// }, nil
-	return nil, fmt.Errorf("not implemented")
+		if from == "" {
+			// use the main account
+			from = c.cfg.Id
+		}
+		if to == "" {
+			// use the main account
+			to = c.cfg.Id
+		}
+
+		fromId, err := strconv.Atoi(string(from))
+		if err != nil {
+			return nil, fmt.Errorf("expected numeric UID for from-account, not %s: %v", from, err)
+		}
+		toId, err := strconv.Atoi(string(to))
+		if err != nil {
+			return nil, fmt.Errorf("expected numeric UID for to-account, not %s: %v", to, err)
+		}
+
+		response, err = c.api.CreateUniversalTransfer(
+			args.GetSymbol(),
+			args.GetAmount(),
+			fromId,
+			toId,
+			fromType,
+			toType,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	state := client.OperationStatusSuccess
+	if response.Result.Status != api.TransferStateSuccess {
+		slog.Error("transfer status unexpected", "status", response.Result.Status)
+		// assume pending as it could still occur
+		state = client.OperationStatusPending
+	}
+	return &client.TransferStatus{
+		ID:     response.Result.TransferID,
+		Status: state,
+	}, nil
 }
 
 func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.WithdrawalResponse, error) {

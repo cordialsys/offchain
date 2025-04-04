@@ -38,7 +38,7 @@ func (c *Config) GetExchange(id ExchangeId) (*ExchangeConfig, bool) {
 
 const ENV_OFFCHAIN_CONFIG = "OFFCHAIN_CONFIG"
 
-func LoadConfig(configPathMaybe string) (*Config, error) {
+func LoadUnvalidatedConfig(configPathMaybe string) (*Config, error) {
 	type configsection struct {
 		Offchain Config `yaml:"offchain"`
 	}

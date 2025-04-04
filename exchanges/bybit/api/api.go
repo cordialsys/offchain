@@ -60,7 +60,7 @@ func (c *Client) Request(method, path string, input interface{}, output interfac
 	}
 	apiUrl := c.baseURL + path
 
-	log := slog.With("method", method, "url", apiUrl)
+	log := slog.With("method", method, "url", apiUrl, "query", query)
 
 	var bodyStr string
 	if input != nil {

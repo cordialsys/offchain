@@ -7,6 +7,13 @@ offchain:
   # - cross-margin
   # - isolated-margin
   # - derivatives
+  #
+  # Account type should be have the funding account first (whatever account type gets funds when you deposit).
+  # This way, it's easier to transfer to subaccount, as it'll be the default for the emitting account.  Example:
+  # ```
+  # oc exchange --exchange bybit transfer  --to offchain2 --amount .1 --symbol USDC
+  # ```
+  #
 
   exchanges:
     binance:
@@ -27,10 +34,10 @@ offchain:
     bybit:
       # https://bybit-exchange.github.io/docs/v5/enum#accounttype
       account_types:
-        - type: "UNIFIED"
-          aliases: ["trading"]
         - type: "FUND"
           aliases: ["funding"]
+        - type: "UNIFIED"
+          aliases: ["trading"]
         - type: "CONTRACT"
           aliases: ["derivatives"]
         - type: "SPOT"

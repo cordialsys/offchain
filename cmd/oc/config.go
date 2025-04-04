@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -15,7 +16,7 @@ func NewConfigCmd() *cobra.Command {
 		Use:          "config",
 		Short:        "Print out the current config",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := oc.LoadConfig(configPath)
+			config, err := loader.LoadValidatedConfig(configPath)
 			if err != nil {
 				return err
 			}

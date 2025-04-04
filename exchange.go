@@ -9,6 +9,8 @@ import (
 )
 
 type ExchangeId string
+type AccountId string
+type AccountType string
 
 var (
 	Okx       ExchangeId = "okx"
@@ -34,6 +36,9 @@ type MultiSecret struct {
 type ExchangeClientConfig struct {
 	ApiUrl string `yaml:"api_url"`
 
+	// Id of the main account, if required by the exchange.
+	Id AccountId `yaml:"id"`
+
 	// The account types supported by the exchange.
 	AccountTypes   []*AccountTypeConfig `yaml:"account_types"`
 	NoAccountTypes *bool                `yaml:"no_account_types,omitempty"`
@@ -54,17 +59,20 @@ type ExchangeConfig struct {
 	SubAccounts []*SubAccount `yaml:"subaccounts"`
 }
 
+type SubAccountHeader struct {
+	// The id of the subaccount is required.  This is created on the exchange by the user.
+	// If it does not match, then it won't work.
+	Id    AccountId `yaml:"id" json:"id"`
+	Alias string    `yaml:"alias,omitempty" json:"alias,omitempty"`
+}
+
 // A subaccount is an isolated account on an exchange.  It's just like a main account, but typically you
 // cannot withdraw funds from it directly.  Instead, funds must be transferred to the main account first.
 // Subaccounts have their own independent API keys.
 type SubAccount struct {
-	// The id of the subaccount is required.  This is created on the exchange by the user.
-	// If it does not match, then it won't work.
-	Id          string `yaml:"id"`
-	MultiSecret `yaml:",inline"`
+	SubAccountHeader `yaml:",inline"`
+	MultiSecret      `yaml:",inline"`
 }
-
-type AccountType string
 
 type AccountTypeConfig struct {
 	// The ID for the account type used by the exchange (e.g. "SPOT" or "ISOLATED_MARGIN" on binance).
@@ -93,6 +101,22 @@ func (cfg *ExchangeConfig) ResolveAccountType(typeOrAlias string) (accountCfg *A
 		}
 	}
 	return nil, false, fmt.Sprintf("account type or alias %s not found for exchange %s.  Options: %s", typeOrAlias, cfg.ExchangeId, strings.Join(options, ", "))
+}
+
+func (cfg *ExchangeConfig) FirstAccountType() (accountCfg *AccountTypeConfig, ok bool) {
+	if len(cfg.AccountTypes) == 0 {
+		return &AccountTypeConfig{}, false
+	}
+	return cfg.AccountTypes[0], true
+}
+
+func (cfg *ExchangeConfig) ResolveSubAccount(idOrAlias string) (accountCfg *SubAccount, ok bool) {
+	for _, sa := range cfg.SubAccounts {
+		if string(sa.Id) == idOrAlias || sa.Alias == idOrAlias {
+			return sa, true
+		}
+	}
+	return nil, false
 }
 
 func (c *MultiSecret) LoadSecrets() error {

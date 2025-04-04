@@ -8,6 +8,7 @@ import (
 
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/cmd"
+	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +51,7 @@ func NewExchangeCmd() *cobra.Command {
 		SilenceUsage: true,
 		PersistentPreRunE: func(preCmd *cobra.Command, args []string) error {
 			cmd.SetVerbosityFromCmd(preCmd)
-			config, err := oc.LoadConfig(configPath)
+			config, err := loader.LoadValidatedConfig(configPath)
 			if err != nil {
 				return err
 			}
@@ -69,7 +70,7 @@ func NewExchangeCmd() *cobra.Command {
 
 			if subaccountId != "" {
 				for _, subaccount := range exchangeConfig.SubAccounts {
-					if subaccount.Id == subaccountId {
+					if string(subaccount.Id) == subaccountId || subaccount.Alias == subaccountId {
 						secrets = &subaccount.MultiSecret
 					}
 				}

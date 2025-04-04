@@ -19,7 +19,7 @@ func NewListSubaccountsCmd() *cobra.Command {
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			exchange := cmd.Flag("exchange").Value.String()
 			configPath := cmd.Flag("config").Value.String()
-			config, err := oc.LoadConfig(configPath)
+			config, err := loader.LoadValidatedConfig(configPath)
 			if err != nil {
 				return err
 			}

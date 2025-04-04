@@ -6,7 +6,6 @@ import (
 	"time"
 
 	oc "github.com/cordialsys/offchain"
-	"github.com/cordialsys/offchain/client"
 )
 
 type AccountType string
@@ -20,14 +19,14 @@ const (
 )
 
 type UniversalTransferRequest struct {
-	FromEmail       client.AccountId `json:"fromEmail,omitempty"`
-	ToEmail         client.AccountId `json:"toEmail,omitempty"`
-	FromAccountType AccountType      `json:"fromAccountType"`
-	ToAccountType   AccountType      `json:"toAccountType"`
-	ClientTranId    string           `json:"clientTranId,omitempty"`
-	Symbol          oc.SymbolId      `json:"symbol,omitempty"`
-	Asset           oc.SymbolId      `json:"asset"`
-	Amount          oc.Amount        `json:"amount"`
+	FromEmail       oc.AccountId `json:"fromEmail,omitempty"`
+	ToEmail         oc.AccountId `json:"toEmail,omitempty"`
+	FromAccountType AccountType  `json:"fromAccountType"`
+	ToAccountType   AccountType  `json:"toAccountType"`
+	ClientTranId    string       `json:"clientTranId,omitempty"`
+	Symbol          oc.SymbolId  `json:"symbol,omitempty"`
+	Asset           oc.SymbolId  `json:"asset"`
+	Amount          oc.Amount    `json:"amount"`
 }
 
 type UniversalTransferResponse struct {
