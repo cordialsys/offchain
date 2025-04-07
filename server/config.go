@@ -28,24 +28,26 @@ type HttpPublicKey struct {
 	Key hex.Hex `yaml:"key"`
 }
 
-type Auth struct {
-	Read  []BearerToken `yaml:"read"`
-	Write []BearerToken `yaml:"write"`
-}
 type Config struct {
 	Listen    string   `yaml:"listen" env-default:":6333"`
 	Origins   []string `yaml:"origins" env-default:""`
 	AnyOrigin bool     `yaml:"any_origin" env-default:"false"`
-	Auth      Auth     `yaml:"auth"`
+
+	BearerTokens []BearerToken   `yaml:"bearer_tokens"`
+	PublicKeys   []HttpPublicKey `yaml:"public_keys"`
 }
 
 const ENV_OFFCHAIN_CONFIG = "OFFCHAIN_CONFIG"
 
 func LoadConfig(configPathMaybe string) (*Config, error) {
-	type configsection struct {
-		Offchain Config `yaml:"server"`
+	type configsection2 struct {
+		Server Config `yaml:"server"`
 	}
-	section := configsection{}
+	type configsection1 struct {
+		Offchain configsection2 `yaml:"offchain"`
+	}
+
+	section := configsection1{}
 	if configPathMaybe == "" {
 		if v := os.Getenv(ENV_OFFCHAIN_CONFIG); v != "" {
 			configPathMaybe = v
@@ -55,11 +57,11 @@ func LoadConfig(configPathMaybe string) (*Config, error) {
 		return nil, fmt.Errorf("config path is required (maybe set %s)", ENV_OFFCHAIN_CONFIG)
 	}
 
-	logrus.WithField("config", configPathMaybe).Info("loading configuration")
+	logrus.WithField("config", configPathMaybe).Info("loading server configuration")
 	err := cleanenv.ReadConfig(configPathMaybe, &section)
 	if err != nil {
 		return nil, fmt.Errorf("could not read configuration: %v", err)
 	}
 
-	return &section.Offchain, nil
+	return &section.Offchain.Server, nil
 }

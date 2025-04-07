@@ -1,4 +1,4 @@
-package server
+package servererrors
 
 import (
 	"fmt"
@@ -18,4 +18,13 @@ func NotFoundf(c *fiber.Ctx, msg string, args ...interface{}) error {
 
 func InternalErrorf(c *fiber.Ctx, msg string, args ...interface{}) error {
 	return NewErrorf(c, fiber.StatusInternalServerError, msg, args...)
+}
+
+func BadRequestf(c *fiber.Ctx, msg string, args ...interface{}) error {
+	return NewErrorf(c, fiber.StatusBadRequest, msg, args...)
+}
+
+// Maps to Aborted
+func Conflictf(c *fiber.Ctx, msg string, args ...interface{}) error {
+	return NewErrorf(c, fiber.StatusConflict, msg, args...)
 }

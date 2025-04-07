@@ -6,10 +6,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/server/endpoints"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -20,15 +22,11 @@ import (
 type Server struct {
 	app    *fiber.App
 	listen string
-	conf   *oc.Config
-}
-
-func unwrapConfig(c *fiber.Ctx) *oc.Config {
-	return c.Locals("conf").(*oc.Config)
+	ocConf *oc.Config
 }
 
 // New creates a new server instance
-func New(listen string, conf *oc.Config) *Server {
+func New(listen string, ocConf *oc.Config, serverConfig *Config) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -38,9 +36,27 @@ func New(listen string, conf *oc.Config) *Server {
 	// Add middleware
 	app.Use(recover.New())
 	app.Use(logger.New())
-	app.Use(cors.New())
+
+	allowOrigins := []string{"localhost:3000"}
+	if serverConfig.AnyOrigin {
+		allowOrigins = []string{"*"}
+	} else if len(serverConfig.Origins) > 0 {
+		allowOrigins = serverConfig.Origins
+	}
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: strings.Join(allowOrigins, ","),
+	}))
 	app.Use(func(c *fiber.Ctx) error {
-		c.Locals("conf", conf)
+		c.Locals("conf", ocConf)
+
+		// read subaccount if used in header or query
+		subaccount := c.Get("sub-account")
+		if subaccount != "" {
+			subaccount = c.Query("sub-account")
+		}
+		c.Locals("sub-account", subaccount)
+
 		return c.Next()
 	})
 
@@ -53,13 +69,20 @@ func New(listen string, conf *oc.Config) *Server {
 
 	// API routes
 	v1 := app.Group("/v1")
-	v1.Get("/exchanges/:exchange/balances", GetBalances)
-	v1.Get("/exchanges/:exchange/accounts/:account/balances", GetBalances)
+	v1.Get("/exchanges/:exchange/balances", endpoints.GetBalances)
+	v1.Get("/exchanges/:exchange/assets", endpoints.GetAssets)
+	v1.Get("/exchanges/:exchange/deposit-address", endpoints.GetDepositAddress)
+	v1.Get("/exchanges/:exchange/account-types", endpoints.GetAccountTypes)
+	v1.Get("/exchanges/:exchange/subaccounts", endpoints.ListSubaccounts)
+	v1.Get("/exchanges/:exchange/withdrawal-history", endpoints.ListWithdrawalHistory)
+
+	v1.Post("/exchanges/:exchange/account-transfer", endpoints.AccountTransfer)
+	v1.Post("/exchanges/:exchange/withdrawal", endpoints.CreateWithdrawal)
 
 	return &Server{
 		app:    app,
 		listen: listen,
-		conf:   conf,
+		ocConf: ocConf,
 	}
 }
 

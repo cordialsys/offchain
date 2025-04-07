@@ -17,9 +17,10 @@ var (
 	Binance   ExchangeId = "binance"
 	BinanceUS ExchangeId = "binanceus"
 	Bybit     ExchangeId = "bybit"
+	Backpack  ExchangeId = "backpack"
 )
 
-var ValidExchangeIds = []ExchangeId{Okx, Binance, BinanceUS, Bybit}
+var ValidExchangeIds = []ExchangeId{Okx, Binance, BinanceUS, Bybit, Backpack}
 
 type MultiSecret struct {
 	ApiKeyRef     secret.Secret `yaml:"api_key"`

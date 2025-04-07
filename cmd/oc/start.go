@@ -20,7 +20,11 @@ func NewStartCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			server := server.New(listen, config)
+			serverConfig, err := server.LoadConfig(configPath)
+			if err != nil {
+				return err
+			}
+			server := server.New(listen, config, serverConfig)
 			return server.Start()
 		},
 	}

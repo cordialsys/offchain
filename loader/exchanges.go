@@ -5,6 +5,7 @@ import (
 
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/client"
+	"github.com/cordialsys/offchain/exchanges/backpack"
 	"github.com/cordialsys/offchain/exchanges/binance"
 	"github.com/cordialsys/offchain/exchanges/binanceus"
 	"github.com/cordialsys/offchain/exchanges/bybit"
@@ -56,6 +57,8 @@ func NewClient(config *oc.ExchangeConfig, account *oc.Account) (Client, error) {
 		cli, err = binance.NewClient(&config.ExchangeClientConfig, account)
 	case oc.BinanceUS:
 		cli, err = binanceus.NewClient(&config.ExchangeClientConfig, account)
+	case oc.Backpack:
+		cli, err = backpack.NewClient(&config.ExchangeClientConfig, account)
 	default:
 		return nil, fmt.Errorf("unsupported exchange: %s", config.ExchangeId)
 	}
@@ -100,6 +103,10 @@ func LoadValidatedConfig(path string) (*oc.Config, error) {
 			}
 		case oc.Okx:
 			if err := okx.Validate(exchange); err != nil {
+				return nil, err
+			}
+		case oc.Backpack:
+			if err := backpack.Validate(exchange); err != nil {
 				return nil, err
 			}
 		default:

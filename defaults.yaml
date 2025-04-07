@@ -16,6 +16,9 @@ offchain:
   #
 
   exchanges:
+    backpack:
+      no_account_types: true
+
     binance:
       # https://developers.binance.com/docs/sub_account/asset-management/Universal-Transfer
       account_types:
