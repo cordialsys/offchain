@@ -12,7 +12,7 @@ import (
 
 var Now = time.Now
 
-func Sign(req *http.Request, signer signer.SignerI) error {
+func Sign(req *http.Request, signer signer.SignerI, additionalHeaders ...string) error {
 	var bodyBytes []byte
 	var err error
 	if req.Body != nil {
@@ -23,10 +23,13 @@ func Sign(req *http.Request, signer signer.SignerI) error {
 		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 	created := Now().Unix()
-	params := NewSigParams(created)
-	signatureBase := NewSigBase(params, req.Method, req.URL.Path, req.URL.RawQuery, bodyBytes)
+	params := NewSigParams(created, additionalHeaders...)
+	signatureBase := NewSigBase(params, req.Method, req.URL.Path, req.URL.RawQuery, req.Header, bodyBytes)
 
-	sigBaseBz := signatureBase.Serialize()
+	sigBaseBz, err := signatureBase.Serialize()
+	if err != nil {
+		return fmt.Errorf("failed to serialize signature base: %w", err)
+	}
 	rawSig, err := signer.Sign([]byte(sigBaseBz))
 	if err != nil {
 		return fmt.Errorf("failed to sign: %w", err)

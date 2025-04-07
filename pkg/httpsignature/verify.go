@@ -18,40 +18,82 @@ type VerifyArgs struct {
 	Signature      string
 	SignatureInput string
 	ContentDigest  string
+	Headers        http.Header
 }
 
-func VerifyRaw(args VerifyArgs, verifier verifier.VerifierI) error {
+func VerifyRaw(args VerifyArgs, verifier verifier.VerifierI, requiredHeaders ...string) (signatureInput *SigParams, err error) {
 	contentDigest, err := ParseContentDigest(args.ContentDigest)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	signature, err := ParseSignature(args.Signature)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	signatureInput, err := ParseSigParams(args.SignatureInput)
+	signatureInput, err = ParseSigParams(args.SignatureInput)
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	hasPath := false
+	hasMethod := false
+	hasQuery := false
+
+	for _, component := range signatureInput.Components {
+		switch component {
+		case "@path":
+			hasPath = true
+		case "@method":
+			hasMethod = true
+		case "@query":
+			hasQuery = true
+		}
+	}
+	if !hasPath {
+		return nil, fmt.Errorf("missing path in signature input")
+	}
+	if !hasMethod {
+		return nil, fmt.Errorf("missing method in signature input")
+	}
+	if !hasQuery {
+		return nil, fmt.Errorf("missing query in signature input")
+	}
+
+	for _, header := range requiredHeaders {
+		hasHeader := false
+		for _, component := range signatureInput.Components {
+			if component == header {
+				hasHeader = true
+				break
+			}
+		}
+		if !hasHeader {
+			return nil, fmt.Errorf("missing required header in signature input: %s", header)
+		}
 	}
 
 	recalculatedContentDigest := NewContentDigest(args.Body)
 	if !bytes.Equal(recalculatedContentDigest.Digest, contentDigest.Digest) {
-		return fmt.Errorf("content-digest mismatch")
+		return nil, fmt.Errorf("content-digest mismatch")
 	}
 
-	sigBase := SigbaseFrom(signatureInput, args.Method, args.Path, args.Query, contentDigest)
-	message := sigBase.Serialize()
+	sigBase := SigbaseFrom(signatureInput, args.Method, args.Path, args.Query, args.Headers, contentDigest)
+	message, err := sigBase.Serialize()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize signature base: %w", err)
+	}
 
 	ok := verifier.Verify([]byte(message), signature.Signature)
 	if !ok {
-		return fmt.Errorf("signature invalid")
+		return nil, fmt.Errorf("signature invalid")
 	}
-	return nil
+
+	return signatureInput, nil
 }
 
-func Verify(req *http.Request, verifier verifier.VerifierI) error {
+func Verify(req *http.Request, verifier verifier.VerifierI, requiredHeaders ...string) (signatureInput *SigParams, err error) {
 	// var bodyBytes []byte
 	var verifyArgs VerifyArgs
 	if req.Body != nil {
@@ -59,13 +101,13 @@ func Verify(req *http.Request, verifier verifier.VerifierI) error {
 		req.Body = io.NopCloser(bytes.NewBuffer(verifyArgs.Body))
 	}
 	if req.Header.Get(HeaderContentDigest) == "" {
-		return fmt.Errorf("missing content-digest header")
+		return nil, fmt.Errorf("missing content-digest header")
 	}
 	if req.Header.Get(HeaderSignature) == "" {
-		return fmt.Errorf("missing signature header")
+		return nil, fmt.Errorf("missing signature header")
 	}
 	if req.Header.Get(HeaderSignatureInput) == "" {
-		return fmt.Errorf("missing signature-input header")
+		return nil, fmt.Errorf("missing signature-input header")
 	}
 
 	verifyArgs.Signature = req.Header.Get(HeaderSignature)
@@ -74,22 +116,23 @@ func Verify(req *http.Request, verifier verifier.VerifierI) error {
 	verifyArgs.Method = req.Method
 	verifyArgs.Path = req.URL.Path
 	verifyArgs.Query = req.URL.RawQuery
+	verifyArgs.Headers = req.Header
 
-	return VerifyRaw(verifyArgs, verifier)
+	return VerifyRaw(verifyArgs, verifier, requiredHeaders...)
 }
 
-func VerifyFiber(c *fiber.Ctx, verifier verifier.VerifierI) error {
+func VerifyFiber(c *fiber.Ctx, verifier verifier.VerifierI, requiredHeaders ...string) (signatureInput *SigParams, err error) {
 	// var bodyBytes []byte
 	var verifyArgs VerifyArgs
 	verifyArgs.Body = c.Body()
 	if c.Get(HeaderContentDigest) == "" {
-		return fmt.Errorf("missing content-digest header")
+		return nil, fmt.Errorf("missing content-digest header")
 	}
 	if c.Get(HeaderSignature) == "" {
-		return fmt.Errorf("missing signature header")
+		return nil, fmt.Errorf("missing signature header")
 	}
 	if c.Get(HeaderSignatureInput) == "" {
-		return fmt.Errorf("missing signature-input header")
+		return nil, fmt.Errorf("missing signature-input header")
 	}
 
 	verifyArgs.Signature = c.Get(HeaderSignature)
@@ -98,6 +141,7 @@ func VerifyFiber(c *fiber.Ctx, verifier verifier.VerifierI) error {
 	verifyArgs.Method = c.Method()
 	verifyArgs.Path = c.Path()
 	verifyArgs.Query = string(c.Request().URI().QueryString())
+	verifyArgs.Headers = c.GetReqHeaders()
 
-	return VerifyRaw(verifyArgs, verifier)
+	return VerifyRaw(verifyArgs, verifier, requiredHeaders...)
 }

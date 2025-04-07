@@ -84,8 +84,13 @@ func New(ocConf *oc.Config, args ServerArgs) *Server {
 	httpSigAuth := func(c *fiber.Ctx) error {
 		verified := false
 		lastErr := fmt.Errorf("invalid signature")
+		requiredHeaders := []string{}
+		if c.Get("sub-account") != "" {
+			// ensure sub-account is in the signature input if it is used
+			requiredHeaders = append(requiredHeaders, "sub-account")
+		}
 		for _, key := range args.PublicKeys {
-			lastErr := httpsignature.VerifyFiber(c, key)
+			_, lastErr := httpsignature.VerifyFiber(c, key, requiredHeaders...)
 			if lastErr == nil {
 				verified = true
 				break

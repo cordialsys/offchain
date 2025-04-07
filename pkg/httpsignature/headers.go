@@ -68,15 +68,12 @@ type SigParams struct {
 	Attributes []SigParamKV
 }
 
-func NewSigParams(Created int64) *SigParams {
+func NewSigParams(Created int64, headers ...string) *SigParams {
+	components := []string{"@method", "@path", "@query", "content-digest"}
+	components = append(components, headers...)
 	return &SigParams{
-		Name: "iam",
-		Components: []string{
-			"@method",
-			"@path",
-			"@query",
-			"content-digest",
-		},
+		Name:       "iam",
+		Components: components,
 		Attributes: []SigParamKV{
 			{
 				Key:   "created",

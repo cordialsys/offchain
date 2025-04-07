@@ -47,10 +47,11 @@ func TestVerify(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name     string
-		setupReq func() *http.Request
-		verifier verifier.VerifierI
-		errorMsg string
+		name            string
+		setupReq        func() *http.Request
+		verifier        verifier.VerifierI
+		errorMsg        string
+		requiredHeaders []string
 	}{
 		{
 			name: "valid signature",
@@ -167,12 +168,54 @@ func TestVerify(t *testing.T) {
 			},
 			verifier: testVerifier,
 		},
+		{
+			name: "valid signature with additional header",
+			setupReq: func() *http.Request {
+				body := []byte("test body")
+				req, _ := http.NewRequest("GET", "https://example.com/path?query=value", bytes.NewReader(body))
+				req.Header.Set("sub-account", "test-sub-account")
+				err := httpsignature.Sign(req, testSigner, "sub-account")
+				require.NoError(t, err)
+				return req
+			},
+			requiredHeaders: []string{"sub-account"},
+			verifier:        testVerifier,
+		},
+		{
+			name: "valid signature with additional header missing",
+			setupReq: func() *http.Request {
+				body := []byte("test body")
+				req, _ := http.NewRequest("GET", "https://example.com/path?query=value", bytes.NewReader(body))
+				req.Header.Set("sub-account", "test-sub-account")
+				err := httpsignature.Sign(req, testSigner, "sub-account")
+				require.NoError(t, err)
+				// should not verify without this
+				req.Header.Del("sub-account")
+				return req
+			},
+			verifier:        testVerifier,
+			requiredHeaders: []string{"sub-account"},
+			errorMsg:        "signature invalid",
+		},
+		{
+			name: "valid signature but missing required header",
+			setupReq: func() *http.Request {
+				body := []byte("test body")
+				req, _ := http.NewRequest("GET", "https://example.com/path?query=value", bytes.NewReader(body))
+				err := httpsignature.Sign(req, testSigner)
+				require.NoError(t, err)
+				return req
+			},
+			verifier:        testVerifier,
+			requiredHeaders: []string{"sub-account"},
+			errorMsg:        "missing required header in signature input: sub-account",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := tt.setupReq()
-			err := httpsignature.Verify(req, tt.verifier)
+			_, err := httpsignature.Verify(req, tt.verifier, tt.requiredHeaders...)
 
 			if tt.errorMsg != "" {
 				require.Error(t, err)
