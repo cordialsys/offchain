@@ -6,12 +6,16 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
 
 	oc "github.com/cordialsys/offchain"
+	"github.com/cordialsys/offchain/pkg/httpsignature"
+	"github.com/cordialsys/offchain/pkg/httpsignature/verifier"
 	"github.com/cordialsys/offchain/server/endpoints"
+	"github.com/cordialsys/offchain/server/servererrors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -21,12 +25,22 @@ import (
 // Server represents the HTTP server
 type Server struct {
 	app    *fiber.App
-	listen string
 	ocConf *oc.Config
+	ServerArgs
+}
+
+type ServerArgs struct {
+	Listen    string
+	AnyOrigin bool
+	Origins   []string
+
+	BearerTokens        []string
+	PublicKeys          []verifier.VerifierI
+	PublicReadEndpoints bool
 }
 
 // New creates a new server instance
-func New(listen string, ocConf *oc.Config, serverConfig *Config) *Server {
+func New(ocConf *oc.Config, args ServerArgs) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -37,11 +51,11 @@ func New(listen string, ocConf *oc.Config, serverConfig *Config) *Server {
 	app.Use(recover.New())
 	app.Use(logger.New())
 
-	allowOrigins := []string{"localhost:3000"}
-	if serverConfig.AnyOrigin {
+	allowOrigins := []string{"http://localhost:3000"}
+	if args.AnyOrigin {
 		allowOrigins = []string{"*"}
-	} else if len(serverConfig.Origins) > 0 {
-		allowOrigins = serverConfig.Origins
+	} else if len(args.Origins) > 0 {
+		allowOrigins = args.Origins
 	}
 
 	app.Use(cors.New(cors.Config{
@@ -67,22 +81,65 @@ func New(listen string, ocConf *oc.Config, serverConfig *Config) *Server {
 		})
 	})
 
+	httpSigAuth := func(c *fiber.Ctx) error {
+		verified := false
+		lastErr := fmt.Errorf("invalid signature")
+		for _, key := range args.PublicKeys {
+			lastErr := httpsignature.VerifyFiber(c, key)
+			if lastErr == nil {
+				verified = true
+				break
+			}
+		}
+		if !verified {
+			return servererrors.Unauthorizedf(c, "%v", lastErr)
+		}
+		return c.Next()
+	}
+
+	bearerOrHttpSigAuth := func(c *fiber.Ctx) error {
+		if args.PublicReadEndpoints {
+			return c.Next()
+		}
+		// expect Authorization: Bearer <token>
+		auth := strings.TrimSpace(c.Get("Authorization"))
+		parts := strings.Split(auth, " ")
+		if len(parts) != 2 {
+			// check for http-signature
+			if c.Get(httpsignature.HeaderSignature) != "" &&
+				c.Get(httpsignature.HeaderSignatureInput) != "" &&
+				c.Get(httpsignature.HeaderContentDigest) != "" {
+				return httpSigAuth(c)
+			}
+
+			return servererrors.BadRequestf(c, "invalid authorization header")
+		}
+		if parts[0] != "Bearer" {
+			return servererrors.BadRequestf(c, "expected Bearer token in authorization header")
+		}
+		token := parts[1]
+		if slices.Contains(args.BearerTokens, token) {
+			return c.Next()
+		}
+		return servererrors.Unauthorizedf(c, "invalid bearer token")
+	}
+
 	// API routes
 	v1 := app.Group("/v1")
-	v1.Get("/exchanges/:exchange/balances", endpoints.GetBalances)
-	v1.Get("/exchanges/:exchange/assets", endpoints.GetAssets)
-	v1.Get("/exchanges/:exchange/deposit-address", endpoints.GetDepositAddress)
-	v1.Get("/exchanges/:exchange/account-types", endpoints.GetAccountTypes)
-	v1.Get("/exchanges/:exchange/subaccounts", endpoints.ListSubaccounts)
-	v1.Get("/exchanges/:exchange/withdrawal-history", endpoints.ListWithdrawalHistory)
+	v1.Get("/exchanges/:exchange/balances", bearerOrHttpSigAuth, endpoints.GetBalances)
+	v1.Get("/exchanges/:exchange/assets", bearerOrHttpSigAuth, endpoints.GetAssets)
+	v1.Get("/exchanges/:exchange/deposit-address", bearerOrHttpSigAuth, endpoints.GetDepositAddress)
+	v1.Get("/exchanges/:exchange/account-types", bearerOrHttpSigAuth, endpoints.GetAccountTypes)
+	v1.Get("/exchanges/:exchange/subaccounts", bearerOrHttpSigAuth, endpoints.ListSubaccounts)
+	v1.Get("/exchanges/:exchange/withdrawal-history", bearerOrHttpSigAuth, endpoints.ListWithdrawalHistory)
 
-	v1.Post("/exchanges/:exchange/account-transfer", endpoints.AccountTransfer)
-	v1.Post("/exchanges/:exchange/withdrawal", endpoints.CreateWithdrawal)
+	v1.Post("/exchanges/:exchange/account-transfer", httpSigAuth, endpoints.AccountTransfer)
+	v1.Post("/exchanges/:exchange/withdrawal", httpSigAuth, endpoints.CreateWithdrawal)
 
 	return &Server{
-		app:    app,
-		listen: listen,
-		ocConf: ocConf,
+		app:        app,
+		ocConf:     ocConf,
+		ServerArgs: args,
 	}
 }
 
@@ -90,12 +147,12 @@ func New(listen string, ocConf *oc.Config, serverConfig *Config) *Server {
 func (s *Server) Start() error {
 	// Start server in a goroutine so we can handle graceful shutdown
 	go func() {
-		if err := s.app.Listen(s.listen); err != nil {
+		if err := s.app.Listen(s.Listen); err != nil {
 			log.Fatalf("Error starting server: %v", err)
 		}
 	}()
 
-	fmt.Printf("Server started on %s\n", s.listen)
+	fmt.Printf("Server started on %s\n", s.Listen)
 
 	// Wait for interrupt signal to gracefully shut down the server
 	quit := make(chan os.Signal, 1)

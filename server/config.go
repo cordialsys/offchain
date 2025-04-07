@@ -5,13 +5,14 @@ import (
 	"os"
 
 	"github.com/cordialsys/offchain/pkg/hex"
+	"github.com/cordialsys/offchain/pkg/secret"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/sirupsen/logrus"
 )
 
 type BearerToken struct {
-	Token string `yaml:"token"`
-	Name  string `yaml:"name"`
+	Token secret.Secret `yaml:"token"`
+	Name  string        `yaml:"name"`
 }
 
 type Algorithm string
@@ -29,12 +30,13 @@ type HttpPublicKey struct {
 }
 
 type Config struct {
-	Listen    string   `yaml:"listen" env-default:":6333"`
+	Listen    string   `yaml:"listen" env-default:"127.0.0.1:6333"`
 	Origins   []string `yaml:"origins" env-default:""`
 	AnyOrigin bool     `yaml:"any_origin" env-default:"false"`
 
-	BearerTokens []BearerToken   `yaml:"bearer_tokens"`
-	PublicKeys   []HttpPublicKey `yaml:"public_keys"`
+	PublicReadEndpoints bool            `yaml:"public_read_endpoints"`
+	BearerTokens        []BearerToken   `yaml:"bearer_tokens"`
+	PublicKeys          []HttpPublicKey `yaml:"public_keys"`
 }
 
 const ENV_OFFCHAIN_CONFIG = "OFFCHAIN_CONFIG"
