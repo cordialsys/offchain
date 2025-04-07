@@ -5,9 +5,30 @@ import (
 
 	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/loader"
+	"github.com/cordialsys/offchain/server/client/api"
 	"github.com/cordialsys/offchain/server/servererrors"
 	"github.com/gofiber/fiber/v2"
 )
+
+func exportWithdrawalHistory(resp []*client.WithdrawalHistory) []*api.HistoricalWithdrawal {
+	withdrawalHistory := make([]*api.HistoricalWithdrawal, len(resp))
+	for i, w := range resp {
+		withdrawalHistory[i] = &api.HistoricalWithdrawal{
+			Id:            w.ID,
+			Status:        string(w.Status),
+			Symbol:        string(w.Symbol),
+			Network:       string(w.Network),
+			Amount:        w.Amount.String(),
+			Fee:           api.As(w.Fee.String()),
+			TransactionId: api.As(string(w.TransactionId)),
+			Comment:       api.As(w.Comment),
+			Notes:         api.As(w.Notes),
+			// TODO asset
+			Asset: nil,
+		}
+	}
+	return withdrawalHistory
+}
 
 // ListWithdrawalHistory returns the withdrawal history for an exchange account
 func ListWithdrawalHistory(c *fiber.Ctx) error {
@@ -48,5 +69,5 @@ func ListWithdrawalHistory(c *fiber.Ctx) error {
 		return servererrors.Conflictf(c, "failed to get withdrawal history: %s", err)
 	}
 
-	return c.JSON(resp)
+	return c.JSON(exportWithdrawalHistory(resp))
 }

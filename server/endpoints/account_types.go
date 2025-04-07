@@ -4,6 +4,7 @@ import (
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/loader"
 	"github.com/cordialsys/offchain/pkg/secret"
+	"github.com/cordialsys/offchain/server/client/api"
 	"github.com/cordialsys/offchain/server/servererrors"
 	"github.com/gofiber/fiber/v2"
 )
@@ -17,6 +18,18 @@ var NopAccount = &oc.Account{
 		SecretKeyRef:  secret.Secret("raw:AAA"),
 		PassphraseRef: secret.Secret("raw:AAA"),
 	},
+}
+
+func exportAccountTypes(resp []*oc.AccountTypeConfig) []*api.AccountType {
+	types := make([]*api.AccountType, len(resp))
+	for i, t := range resp {
+		types[i] = &api.AccountType{
+			Type:        api.AccountTypeID(t.Type),
+			Description: api.As(t.Description),
+			Aliases:     t.Aliases,
+		}
+	}
+	return types
 }
 
 // GetAccountTypes returns the list of valid account types for an exchange
@@ -48,5 +61,5 @@ func GetAccountTypes(c *fiber.Ctx) error {
 		return servererrors.Conflictf(c, "failed to get account types: %s", err)
 	}
 
-	return c.JSON(accountTypes)
+	return c.JSON(exportAccountTypes(accountTypes))
 }

@@ -8,6 +8,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func exportDepositAddress(resp oc.Address) string {
+	return string(resp)
+}
+
 // GetDepositAddress returns a deposit address for a specified symbol and network
 func GetDepositAddress(c *fiber.Ctx) error {
 	exchangeCfg, account, err := loadAccount(c, c.Params("exchange"))
@@ -52,5 +56,5 @@ func GetDepositAddress(c *fiber.Ctx) error {
 		return servererrors.Conflictf(c, "failed to get deposit address: %s", err)
 	}
 
-	return c.JSON(resp)
+	return c.JSON(exportDepositAddress(resp))
 }

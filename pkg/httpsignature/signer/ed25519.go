@@ -13,7 +13,7 @@ type Ed25519Signer struct {
 	Key ed25519.PrivateKey
 }
 
-func NewSessionSigner(secret string) (*Ed25519Signer, error) {
+func NewEd25519Signer(secret string) (*Ed25519Signer, error) {
 	secret = fmt.Sprintf("%064s", secret)
 	seedBytes, err := hex.DecodeString(secret)
 	if err != nil {

@@ -4,16 +4,16 @@ import (
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/loader"
+	"github.com/cordialsys/offchain/server/client/api"
 	"github.com/cordialsys/offchain/server/servererrors"
 	"github.com/gofiber/fiber/v2"
 )
 
-// WithdrawalRequest represents the request body for withdrawals
-type WithdrawalRequest struct {
-	To      oc.Address   `json:"to"`
-	Symbol  oc.SymbolId  `json:"symbol"`
-	Network oc.NetworkId `json:"network"`
-	Amount  oc.Amount    `json:"amount"`
+func exportWithdrawal(resp *client.WithdrawalResponse) *api.WithdrawalResponse {
+	return &api.WithdrawalResponse{
+		Id:     resp.ID,
+		Status: api.OperationStatus(resp.Status),
+	}
 }
 
 // CreateWithdrawal handles withdrawal requests from an exchange
@@ -24,22 +24,29 @@ func CreateWithdrawal(c *fiber.Ctx) error {
 	}
 
 	// Parse request body
-	var req WithdrawalRequest
+	var req api.Withdrawal
 	if err := c.BodyParser(&req); err != nil {
 		return servererrors.BadRequestf(c, "invalid request body: %s", err)
 	}
 
 	// Validate required fields
-	if req.To == "" {
+	if req.Address == "" {
 		return servererrors.BadRequestf(c, "to address is required")
 	}
 
-	if req.Symbol == "" {
+	symbol := oc.SymbolId(api.DerefOrZero(req.Symbol))
+	network := oc.NetworkId(api.DerefOrZero(req.Network))
+	if symbol == "" {
 		return servererrors.BadRequestf(c, "symbol is required")
 	}
 
-	if req.Network == "" {
+	if network == "" {
 		return servererrors.BadRequestf(c, "network is required")
+	}
+
+	amount, err := oc.NewAmountFromString(req.Amount)
+	if err != nil {
+		return servererrors.BadRequestf(c, "invalid amount: %s", err)
 	}
 
 	// Create client
@@ -50,15 +57,15 @@ func CreateWithdrawal(c *fiber.Ctx) error {
 
 	// Create withdrawal
 	resp, err := cli.CreateWithdrawal(client.NewWithdrawalArgs(
-		req.To,
-		req.Symbol,
-		req.Network,
-		req.Amount,
+		oc.Address(req.Address),
+		symbol,
+		network,
+		amount,
 	))
 
 	if err != nil {
 		return servererrors.Conflictf(c, "failed to create withdrawal: %s", err)
 	}
 
-	return c.JSON(resp)
+	return c.JSON(exportWithdrawal(resp))
 }

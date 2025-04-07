@@ -4,18 +4,16 @@ import (
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/client"
 	"github.com/cordialsys/offchain/loader"
+	"github.com/cordialsys/offchain/server/client/api"
 	"github.com/cordialsys/offchain/server/servererrors"
 	"github.com/gofiber/fiber/v2"
 )
 
-// AccountTransferRequest represents the request body for account transfers
-type AccountTransferRequest struct {
-	Symbol   string `json:"symbol"`
-	Amount   string `json:"amount"`
-	From     string `json:"from,omitempty"`
-	To       string `json:"to,omitempty"`
-	FromType string `json:"from_type,omitempty"`
-	ToType   string `json:"to_type,omitempty"`
+func exportAccountTransfer(resp *client.TransferStatus) *api.TransferResponse {
+	return &api.TransferResponse{
+		Id:     resp.ID,
+		Status: api.OperationStatus(resp.Status),
+	}
 }
 
 // AccountTransfer handles transfers between accounts on an exchange
@@ -26,13 +24,14 @@ func AccountTransfer(c *fiber.Ctx) error {
 	}
 
 	// Parse request body
-	var req AccountTransferRequest
+	var req api.Transfer
 	if err := c.BodyParser(&req); err != nil {
 		return servererrors.BadRequestf(c, "invalid request body: %s", err)
 	}
 
 	// Validate required fields
-	if req.Symbol == "" {
+	symbol := api.DerefOrZero(req.Symbol)
+	if symbol == "" {
 		return servererrors.BadRequestf(c, "symbol is required")
 	}
 
@@ -58,13 +57,13 @@ func AccountTransfer(c *fiber.Ctx) error {
 
 	// Prepare transfer arguments
 	transferArgs := client.NewAccountTransferArgs(
-		oc.SymbolId(req.Symbol),
+		oc.SymbolId(symbol),
 		amount,
 	)
 
 	// Handle from type
-	if req.FromType != "" {
-		resolvedFromType, ok, message := exchangeCfg.ResolveAccountType(req.FromType)
+	if fromType := api.DerefOrZero(req.FromType); fromType != "" {
+		resolvedFromType, ok, message := exchangeCfg.ResolveAccountType(fromType)
 		if !ok {
 			return servererrors.BadRequestf(c, message)
 		}
@@ -78,8 +77,8 @@ func AccountTransfer(c *fiber.Ctx) error {
 	}
 
 	// Handle to type
-	if req.ToType != "" {
-		resolvedToType, ok, message := exchangeCfg.ResolveAccountType(req.ToType)
+	if toType := api.DerefOrZero(req.ToType); toType != "" {
+		resolvedToType, ok, message := exchangeCfg.ResolveAccountType(toType)
 		if !ok {
 			return servererrors.BadRequestf(c, message)
 		}
@@ -93,8 +92,8 @@ func AccountTransfer(c *fiber.Ctx) error {
 	}
 
 	// Handle from account
-	if req.From != "" {
-		fromSubaccount, ok := exchangeCfg.ResolveSubAccount(req.From)
+	if from := api.DerefOrZero(req.From); from != "" {
+		fromSubaccount, ok := exchangeCfg.ResolveSubAccount(from)
 		if !ok {
 			return servererrors.BadRequestf(c, "invalid from account")
 		}
@@ -102,8 +101,8 @@ func AccountTransfer(c *fiber.Ctx) error {
 	}
 
 	// Handle to account
-	if req.To != "" {
-		toSubaccount, ok := exchangeCfg.ResolveSubAccount(req.To)
+	if to := api.DerefOrZero(req.To); to != "" {
+		toSubaccount, ok := exchangeCfg.ResolveSubAccount(to)
 		if !ok {
 			return servererrors.BadRequestf(c, "invalid to account")
 		}
@@ -111,7 +110,7 @@ func AccountTransfer(c *fiber.Ctx) error {
 	}
 
 	// Ensure at least one transfer parameter is specified
-	if (req.To + req.From + req.FromType + req.ToType) == "" {
+	if (api.DerefOrZero(req.To) + api.DerefOrZero(req.From) + api.DerefOrZero(req.FromType) + api.DerefOrZero(req.ToType)) == "" {
 		return servererrors.BadRequestf(c, "must specify at least one of to, from, from_type, to_type")
 	}
 
@@ -121,5 +120,5 @@ func AccountTransfer(c *fiber.Ctx) error {
 		return servererrors.Conflictf(c, "failed to create account transfer: %s", err)
 	}
 
-	return c.JSON(resp)
+	return c.JSON(exportAccountTransfer(resp))
 }

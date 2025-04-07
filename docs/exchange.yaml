@@ -1,0 +1,468 @@
+openapi: 3.1.0
+info:
+  version: '1.0'
+  title: exchange
+  summary: Central management of funds on 3rd party platforms & exchanges.
+  description: |-
+    API for `offchain` server.  All you need to centrally & securely manage funds on exchanges. 
+
+    https://github.com/cordialsys/offchain
+
+    This focuses solely on endpoints needed to move funds internally and externally for exchanges.  You can use these APIs to rebalance funds on supported exchanges.
+    If your exchange isn't currently supported, we can likely add support for it quickly.
+
+    `offchain` is a self-hosted, open-source product.  We host some endpoints that map to public endpoints on the exchanges,
+    but for the authorized endpoints, you'll need to setup your own `offchain` instance.  It is stateless and very easy to run & configure.
+servers:
+  - url: 'https://exchange.cordialapis.com'
+paths:
+  '/exchanges/{exchange}/assets':
+    get:
+      tags:
+        - Asset
+      summary: List All Assets
+      description: 'List supported assets on the exchange, along with their corresponding network & contract identifiers.'
+      operationId: list-assets
+      parameters:
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User Found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Asset'
+        '404':
+          description: User Not Found
+      servers:
+        - url: 'https://exchange.cordialapis.com'
+  '/exchanges/{exchange}/balances':
+    get:
+      tags:
+        - Balance
+      summary: List All Balances
+      description: List all balances on the particular account of the exchange.
+      operationId: list-all-balances
+      parameters:
+        - $ref: '#/components/parameters/sub-account'
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Post the necessary fields for the API to create a new user.
+        content: {}
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Balance'
+        '400':
+          description: Missing Required Information
+        '409':
+          description: Email Already Taken
+      servers:
+        - url: 'https://exchange.cordialapis.com'
+  '/exchanges/{exchange}/transfers':
+    post:
+      tags:
+        - Transfer
+      summary: Create Transfer
+      description: 'Create an internal account transfer on the exchange.  Normally this is a transfer between sub-accounts, or between the main account and a sub-account.'
+      operationId: create-transfer
+      parameters:
+        - $ref: '#/components/parameters/sub-account'
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transfer'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+      servers:
+        - url: 'https://exchange.cordialapis.com'
+  '/exchanges/{exchange}/withdrawals':
+    get:
+      tags:
+        - Withdrawal
+      summary: List Withdrawal History
+      operationId: list-withdrawals
+      parameters:
+        - $ref: '#/components/parameters/sub-account'
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoricalWithdrawal'
+      servers:
+        - url: 'https://exchange.cordialapis.com'
+    post:
+      tags:
+        - Withdrawal
+      summary: Create Withdrawal
+      description: Create a withdrawal of some asset from an account on the exchange.
+      operationId: create-withdrawal
+      parameters:
+        - $ref: '#/components/parameters/sub-account'
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Withdrawal'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalResponse'
+      servers:
+        - url: 'https://exchange.cordialapis.com'
+  '/exchanges/{exchange}/deposit-address':
+    get:
+      tags:
+        - Deposit
+      summary: Get deposit address
+      description: |-
+        Lookup the deposit address for a specific asset (symbol + network) for an account on an exchange.
+
+        Must specify either `symbol` and `network`, or `asset_name`.
+
+        An `asset_name` is a Cordial Systems asset name like `chains/ETH/assets0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48`,
+        which would replace using `Ethereum` and `USDC` on some exchanges.
+      operationId: get-deposit-address
+      parameters:
+        - $ref: '#/components/parameters/sub-account'
+        - name: symbol
+          in: query
+          description: Symbol used by the exchange for the asset.
+          schema:
+            type: string
+        - name: network
+          in: query
+          description: Network used by the exchange for the asset.
+          schema:
+            type: string
+        - name: asset
+          in: query
+          description: Cordial Systems universal asset name.
+          schema:
+            type: string
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+      servers:
+        - url: 'https://exchange.cordialapis.com'
+  '/exchanges/{exchange}/account-types':
+    get:
+      tags:
+        - Account
+      summary: List account types
+      operationId: list-account-types
+      parameters:
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountType'
+      servers:
+        - url: 'https://exchange.cordialapis.com'
+  '/exchanges/{exchange}/sub-accounts':
+    get:
+      tags:
+        - Account
+      summary: List sub-accounts
+      description: List all configured sub-accounts for the exchange.
+      operationId: list-sub-accounts
+      parameters:
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubAccountHeader'
+      servers:
+        - url: 'https://exchange.cordialapis.com'
+components:
+  parameters:
+    sub-account:
+      name: sub-account
+      in: query
+      description: Optionally specify a sub-account to execute this request on.  May specify the ID or alias for the sub-account.
+      required: false
+      schema:
+        type: string
+  schemas:
+    Asset:
+      type: object
+      title: Asset
+      properties:
+        symbol:
+          type: string
+          description: Symbol used by the exchanged.
+        network:
+          type: string
+          description: 'Symbol for the network/blockchain that the asset is on, used by the exchange.'
+        name:
+          $ref: '#/components/schemas/AssetName'
+      required:
+        - symbol
+        - network
+      x-tags:
+        - Asset
+    AssetName:
+      type: string
+      title: AssetName
+      description: 'The Cordial Systems "universal" name for an asset (instead of specifying exchange-specific `symbol`, `network`).'
+      examples:
+        - chains/SOL/assets/SOL
+        - chains/ETH/assets/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+        - chains/SOL/assets/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+      x-tags:
+        - Asset
+    Balance:
+      type: object
+      title: Balance
+      description: 'Balance of an asset on an exchange.  Some of the balance could be unavailable, due to open orders or used in staking.'
+      properties:
+        symbol:
+          type: string
+        network:
+          type: string
+        asset:
+          $ref: '#/components/schemas/AssetName'
+        Available:
+          $ref: '#/components/schemas/Decimal'
+        Unavailable:
+          $ref: '#/components/schemas/Decimal'
+      required:
+        - symbol
+        - network
+        - Available
+        - Unavailable
+      x-tags:
+        - Balance
+    Decimal:
+      type: string
+      title: Decimal
+      description: Decimal formatted string.
+    Transfer:
+      type: object
+      title: Transfer
+      properties:
+        from_type:
+          $ref: '#/components/schemas/AccountTypeID'
+        to_type:
+          $ref: '#/components/schemas/AccountTypeID'
+        from:
+          type: string
+          description: ID or alias of the account to send from.  By default it uses the account that this request is being executed on.
+        to:
+          type: string
+          description: |-
+            The ID or alias of the account to transfer the funds into.
+            If omitted, it will default to the account this is executing on.
+        symbol:
+          type: string
+        asset:
+          $ref: '#/components/schemas/AssetName'
+        amount:
+          $ref: '#/components/schemas/Decimal'
+      required:
+        - amount
+      x-tags:
+        - Transfer
+    AccountTypeID:
+      type: string
+      title: AccountTypeID
+      description: |-
+        The account type used by the exchange, if account types are used.  E.g. "ISOLATED_MARGIN" or "trading".  An alias for the account type may also be used.
+
+        See `/exchanges/{exchange}/account-types` endpoint.
+
+        By default, the first account type will be used.
+    TransferResponse:
+      type: object
+      title: TransferResponse
+      description: Exchange response to an internal account transfer.
+      properties:
+        id:
+          type: string
+          description: Exchange ID of the internal account transfer.
+        status:
+          $ref: '#/components/schemas/OperationStatus'
+      required:
+        - id
+        - status
+    OperationStatus:
+      type: string
+      enum:
+        - pending
+        - success
+        - failed
+      title: OperationStatus
+      description: Status of an upstream operation.
+    HistoricalWithdrawal:
+      type: object
+      title: HistoricalWithdrawal
+      properties:
+        id:
+          type: string
+          description: ID by the exchange for the withdrawal
+        status:
+          type: string
+        symbol:
+          type: string
+        network:
+          type: string
+        amount:
+          type: string
+        fee:
+          type: string
+        transaction_id:
+          type: string
+          description: Transaction ID (or "transaction hash") is the blockchain ID that can be used to view the movement on an explorer.
+        comment:
+          type: string
+          description: Comment by the exchange on the status of the withdrawal.
+        notes:
+          type: object
+          description: Other exchange-specific metadata about the withdrawal.
+          additionalProperties:
+            type: string
+        asset:
+          $ref: '#/components/schemas/AssetName'
+          description: Cordial Systems name of the asset.
+      required:
+        - id
+        - status
+        - symbol
+        - network
+        - amount
+      x-tags:
+        - Withdrawal
+    Withdrawal:
+      type: object
+      title: Withdrawal
+      properties:
+        address:
+          type: string
+        symbol:
+          type: string
+        network:
+          type: string
+        amount:
+          type: string
+          description: Decimal-string amount to withdraw
+        asset:
+          $ref: '#/components/schemas/AssetName'
+          description: 'The Cordial Systems asset name for what to withdraw (instead of specifying exchange-specific `symbol`, `network`).'
+      required:
+        - address
+        - amount
+      x-tags:
+        - Withdrawal
+    WithdrawalResponse:
+      type: object
+      title: WithdrawalResponse
+      properties:
+        id:
+          type: string
+        status:
+          $ref: '#/components/schemas/OperationStatus'
+      required:
+        - id
+        - status
+    AccountType:
+      type: object
+      title: AccountType
+      properties:
+        type:
+          $ref: '#/components/schemas/AccountTypeID'
+        description:
+          type: string
+        aliases:
+          type: array
+          description: 'Aliases for the account type, e.g. `funding`, `trading`.'
+          items:
+            type: string
+      required:
+        - type
+        - aliases
+      x-tags:
+        - Account
+    SubAccountHeader:
+      type: object
+      title: SubAccountHeader
+      properties:
+        id:
+          type: string
+          description: ID used by the exchange for the sub-account.
+        alias:
+          type: string
+          description: Configured alias for the sub-account.
+      required:
+        - id
+      x-tags:
+        - Account
