@@ -80,7 +80,7 @@ func New(ocConf *oc.Config, args ServerArgs) *Server {
 
 		// read subaccount if used in header or query
 		subaccount := c.Get("sub-account")
-		if subaccount != "" {
+		if subaccount == "" {
 			subaccount = c.Query("sub-account")
 		}
 		c.Locals("sub-account", subaccount)

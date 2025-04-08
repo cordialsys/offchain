@@ -29,25 +29,7 @@ func printJson(data interface{}) {
 
 type contextKey string
 
-// const exchangeConfigKey contextKey = "exchange_config"
-
-// const exchangeAccountSecretsKey contextKey = "exchange_account_secrets"
-// const configContextKey contextKey = "config"
 const exchangeClientKey contextKey = "exchange_client"
-
-// func unwrapExchangeConfig(ctx context.Context) *oc.ExchangeConfig {
-// 	return ctx.Value(exchangeConfigKey).(*oc.ExchangeConfig)
-// }
-
-// func unwrapAccountSecrets(ctx context.Context) *oc.Account {
-// 	return ctx.Value(exchangeAccountSecretsKey).(*oc.Account)
-// }
-
-// func unwrapAccountConfig(ctx context.Context) (*oc.ExchangeConfig, *oc.Account) {
-// 	exchangeConfig := unwrapExchangeConfig(ctx)
-// 	secrets := unwrapAccountSecrets(ctx)
-// 	return exchangeConfig, secrets
-// }
 
 func unwrapClient(ctx context.Context) loader.Client {
 	return ctx.Value(exchangeClientKey).(loader.Client)
@@ -197,7 +179,7 @@ func NewExchangeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "exchange",
 		Short:             "Execute command directly using exchange APIs and local secrets configuration",
-		Aliases:           []string{"e", "ex"},
+		Aliases:           []string{"x", "ex"},
 		SilenceUsage:      true,
 		PersistentPreRunE: exchangePreRun,
 	}

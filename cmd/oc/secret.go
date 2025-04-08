@@ -10,10 +10,15 @@ import (
 
 func NewSecretCmd() *cobra.Command {
 	multi := false
+	help := ""
+	for _, t := range secret.Types {
+		help += fmt.Sprintf("%s: %s\n", t, t.Usage())
+	}
 	cmd := &cobra.Command{
 		SilenceUsage: true,
 		Use:          "secret <reference>",
 		Short:        "Print out a secret given a reference",
+		Long:         help,
 		Args:         cobra.ExactArgs(1),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return nil

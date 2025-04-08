@@ -1,4 +1,14 @@
 offchain:
+    # set httpsignature public keys for the endpoints
+    public_keys:
+      - id: "key1"
+        key: "abf9649d7a0a7534cde49f12de47effd601e60a2258e51b5a257af9ef78e901f"
+    # optionally, set bearer tokens for the read endpoints (not relevant for write endpoints)
+    bearer_tokens:
+      - id: "token1"
+        token: "raw:1234567890"
+
+  # setup API keys for the exchanges
   exchanges:
     okx:
       # load from env

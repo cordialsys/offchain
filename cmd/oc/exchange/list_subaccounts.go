@@ -10,6 +10,7 @@ func NewListSubaccountsCmd() *cobra.Command {
 		SilenceUsage: true,
 		Use:          "subaccounts",
 		Short:        "List all configured subaccounts on an exchange",
+		Aliases:      []string{"sub-accounts"},
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cli := unwrapClient(cmd.Context())
