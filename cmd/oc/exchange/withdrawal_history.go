@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cordialsys/offchain/client"
-	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
 
@@ -15,11 +14,7 @@ func NewListWithdrawalHistoryCmd() *cobra.Command {
 		Use:   "history",
 		Short: "List withdrawal history",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig, secrets)
-			if err != nil {
-				return err
-			}
+			cli := unwrapClient(cmd.Context())
 
 			if cmd.Flags().Changed("limit") {
 				return fmt.Errorf("--limit is not yet supported")

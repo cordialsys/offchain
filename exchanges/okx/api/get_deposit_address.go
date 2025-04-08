@@ -8,7 +8,7 @@ import (
 
 type DepositAddressData struct {
 	// E.g.  "BTC-Bitcoin", "SOL-Solana"
-	SymbolAndChain string `json:"chain"`
+	SymbolAndChain SymbolAndChain `json:"chain"`
 
 	ContractAddr string `json:"ctAddr"`
 	Currency     string `json:"ccy"`

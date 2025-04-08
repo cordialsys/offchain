@@ -3,7 +3,6 @@ package exchange
 import (
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/client"
-	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
 
@@ -18,11 +17,7 @@ func NewWithdrawCmd() *cobra.Command {
 		Use:          "withdraw",
 		Short:        "Withdraw funds from the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig, secrets)
-			if err != nil {
-				return err
-			}
+			cli := unwrapClient(cmd.Context())
 			amount, err := oc.NewAmountFromString(amountS)
 			if err != nil {
 				return err

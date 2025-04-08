@@ -40,7 +40,7 @@ func ListWithdrawalHistory(c *fiber.Ctx) error {
 	// Create client
 	cli, err := loader.NewClient(exchangeCfg, account)
 	if err != nil {
-		return servererrors.InternalErrorf(c, "failed to create client: %s", err)
+		return servererrors.InternalErrorf("failed to create client: %s", err)
 	}
 
 	// Create withdrawal history arguments
@@ -50,10 +50,10 @@ func ListWithdrawalHistory(c *fiber.Ctx) error {
 	if limitStr := c.Query("limit"); limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil {
-			return servererrors.BadRequestf(c, "invalid limit parameter: must be a number")
+			return servererrors.BadRequestf("invalid limit parameter: must be a number")
 		}
 		if limit <= 0 {
-			return servererrors.BadRequestf(c, "invalid limit parameter: must be greater than 0")
+			return servererrors.BadRequestf("invalid limit parameter: must be greater than 0")
 		}
 		args.SetLimit(limit)
 	}
@@ -66,7 +66,7 @@ func ListWithdrawalHistory(c *fiber.Ctx) error {
 	// Get withdrawal history
 	resp, err := cli.ListWithdrawalHistory(args)
 	if err != nil {
-		return servererrors.Conflictf(c, "failed to get withdrawal history: %s", err)
+		return servererrors.Conflictf("failed to get withdrawal history: %s", err)
 	}
 
 	return c.JSON(exportWithdrawalHistory(resp))

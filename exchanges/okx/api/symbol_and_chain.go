@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"strings"
 
 	oc "github.com/cordialsys/offchain"
@@ -27,4 +28,8 @@ func (s SymbolAndChain) SymbolId() oc.SymbolId {
 func (s SymbolAndChain) NetworkId() oc.NetworkId {
 	_, networkId := s.Split()
 	return networkId
+}
+
+func NewSymbolAndChain(symbol oc.SymbolId, network oc.NetworkId) SymbolAndChain {
+	return SymbolAndChain(fmt.Sprintf("%s-%s", symbol, network))
 }

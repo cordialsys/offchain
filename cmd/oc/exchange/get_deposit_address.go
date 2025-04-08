@@ -5,7 +5,6 @@ import (
 
 	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/client"
-	"github.com/cordialsys/offchain/loader"
 	"github.com/spf13/cobra"
 )
 
@@ -18,11 +17,7 @@ func NewGetDepositAddressCmd() *cobra.Command {
 		Use:          "deposit",
 		Short:        "Get a deposit address for a symbol and network",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig, secrets)
-			if err != nil {
-				return err
-			}
+			cli := unwrapClient(cmd.Context())
 			if symbol == "" {
 				return fmt.Errorf("--symbol is required")
 			}

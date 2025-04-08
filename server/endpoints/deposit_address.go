@@ -22,25 +22,25 @@ func GetDepositAddress(c *fiber.Ctx) error {
 	// Get required query parameters
 	symbol := c.Query("symbol")
 	if symbol == "" {
-		return servererrors.BadRequestf(c, "symbol query parameter is required")
+		return servererrors.BadRequestf("symbol query parameter is required")
 	}
 
 	network := c.Query("network")
 	if network == "" {
-		return servererrors.BadRequestf(c, "network query parameter is required")
+		return servererrors.BadRequestf("network query parameter is required")
 	}
 
 	// Create client
 	cli, err := loader.NewClient(exchangeCfg, account)
 	if err != nil {
-		return servererrors.InternalErrorf(c, "failed to create client: %s", err)
+		return servererrors.InternalErrorf("failed to create client: %s", err)
 	}
 
 	// Prepare options
 	options := []client.GetDepositAddressOption{}
 
 	// Check if a specific subaccount was requested
-	subaccount := c.Query("subaccount")
+	subaccount := c.Query("for")
 	if subaccount != "" {
 		options = append(options, client.WithSubaccount(oc.AccountId(subaccount)))
 	}
@@ -53,7 +53,7 @@ func GetDepositAddress(c *fiber.Ctx) error {
 	))
 
 	if err != nil {
-		return servererrors.Conflictf(c, "failed to get deposit address: %s", err)
+		return servererrors.Conflictf("failed to get deposit address: %s", err)
 	}
 
 	return c.JSON(exportDepositAddress(resp))

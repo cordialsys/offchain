@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	awssecretmanager "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/cordialsys/offchain/pkg/keyring"
 	vault "github.com/hashicorp/vault/api"
 	"google.golang.org/api/iterator"
 )
@@ -220,7 +221,15 @@ func GetSecret(uri string) (secret string, err error) {
 			}
 		}
 		return "", fmt.Errorf("could not find a gsm secret by name %s", name)
+	case Keyring:
+		dir := keyring.KeyringDirOrTreasuryHome(args[0])
 
+		kr := keyring.New(dir)
+		key, err := kr.Load(filepath.Base(args[0]))
+		if err != nil {
+			return "", err
+		}
+		return string(key.Secret), nil
 	case AwsSecretManager:
 		if !slices.Contains([]int{1, 2, 3}, len(args)) {
 			return "", fmt.Errorf("%s secret has 1-3 comma separated arguments: %s", AwsSecretManager, AwsSecretManager.Usage())

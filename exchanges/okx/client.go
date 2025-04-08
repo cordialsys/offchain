@@ -52,9 +52,10 @@ func (c *Client) ListAssets() ([]*oc.Asset, error) {
 	}
 	assets := make([]*oc.Asset, len(response.Data))
 	for i, currency := range response.Data {
+		_, network := currency.Chain.Split()
 		assets[i] = oc.NewAsset(
-			oc.SymbolId(currency.Currency),
-			oc.NetworkId(currency.Chain),
+			currency.Currency,
+			network,
 			currency.ContractAddress,
 		)
 	}
@@ -156,7 +157,7 @@ func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.Withdrawa
 		Amount:         args.GetAmount().String(),
 		Destination:    OnChainTransfer,
 		Currency:       args.GetSymbol(),
-		SymbolAndChain: fmt.Sprintf("%s-%s", args.GetSymbol(), args.GetNetwork()),
+		SymbolAndChain: api.NewSymbolAndChain(args.GetSymbol(), args.GetNetwork()),
 		ToAddress:      args.GetAddress(),
 	})
 	if err != nil {
@@ -173,7 +174,7 @@ func (c *Client) GetDepositAddress(args client.GetDepositAddressArgs) (oc.Addres
 	if err != nil {
 		return "", err
 	}
-	expectedSymbolAndChain := fmt.Sprintf("%s-%s", args.GetSymbol(), args.GetNetwork())
+	expectedSymbolAndChain := api.NewSymbolAndChain(args.GetSymbol(), args.GetNetwork())
 	for _, chain := range response.Data {
 		if chain.SymbolAndChain == expectedSymbolAndChain {
 			return oc.Address(chain.Address), nil

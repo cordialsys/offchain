@@ -45,7 +45,7 @@ func NewStartCmd() *cobra.Command {
 			for i, bearer := range serverConfig.BearerTokens {
 				bearers[i], err = bearer.Token.Load()
 				if err != nil {
-					return fmt.Errorf("failed to load bearer token %s: %w", bearer.Name, err)
+					return fmt.Errorf("failed to load bearer token %s: %w", bearer.Id, err)
 				}
 			}
 			publicKeys := make([]verifier.VerifierI, len(serverConfig.PublicKeys))

@@ -3,9 +3,7 @@ package exchange
 import (
 	"fmt"
 
-	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/client"
-	"github.com/cordialsys/offchain/loader"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -17,28 +15,25 @@ func NewListBalancesCmd() *cobra.Command {
 		Use:          "balances",
 		Short:        "List your balances on the exchange",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			exchangeConfig, secrets := unwrapAccountConfig(cmd.Context())
-			cli, err := loader.NewClient(exchangeConfig, secrets)
-			if err != nil {
-				return err
-			}
+			cli := unwrapClient(cmd.Context())
 			balanceArgs := client.NewGetBalanceArgs("")
 			if accountType != "" {
-				at, ok, message := exchangeConfig.ResolveAccountType(accountType)
+				at, ok, message := resolveAccountType(cli, accountType)
 				if !ok {
 					return fmt.Errorf("%s", message)
 				}
 				balanceArgs.SetAccountType(at.Type)
 			} else {
 				// try taking the first account type
-				defaults, ok := oc.GetDefaultConfig(exchangeConfig.ExchangeId)
+				at, ok, err := resolveFirstAccountType(cli)
+				if err != nil {
+					return err
+				}
 				if ok {
-					if len(defaults.AccountTypes) > 0 {
-						logrus.WithFields(logrus.Fields{
-							"type": defaults.AccountTypes[0].Type,
-						}).Infof("using default account type")
-						balanceArgs.SetAccountType(defaults.AccountTypes[0].Type)
-					}
+					logrus.WithFields(logrus.Fields{
+						"type": at.Type,
+					}).Infof("using default account type")
+					balanceArgs.SetAccountType(at.Type)
 				}
 			}
 

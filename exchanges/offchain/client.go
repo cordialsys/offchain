@@ -12,12 +12,12 @@ import (
 // This is a "simulated" exchange that just proxies requests to an offchain server
 type Client struct {
 	cli      *serverclient.Client
-	exchange string
+	exchange oc.ExchangeId
 }
 
 var _ client.Client = &Client{}
 
-func NewClient(serverClient *serverclient.Client, exchange string) (*Client, error) {
+func NewClient(serverClient *serverclient.Client, exchange oc.ExchangeId) (*Client, error) {
 	return &Client{
 		cli:      serverClient,
 		exchange: exchange,
@@ -34,8 +34,9 @@ func (c *Client) ListAssets() ([]*oc.Asset, error) {
 	result := make([]*oc.Asset, len(assets))
 	for i, asset := range assets {
 		result[i] = &oc.Asset{
-			SymbolId:  oc.SymbolId(asset.Symbol),
-			NetworkId: oc.NetworkId(asset.Network),
+			SymbolId:        oc.SymbolId(asset.Symbol),
+			NetworkId:       oc.NetworkId(asset.Network),
+			ContractAddress: oc.ContractAddress(api.DerefOrZero(asset.Contract)),
 		}
 		if asset.Name != nil {
 			// Handle any additional asset properties if needed
@@ -141,10 +142,12 @@ func (c *Client) CreateWithdrawal(args client.WithdrawalArgs) (*client.Withdrawa
 
 func (c *Client) GetDepositAddress(args client.GetDepositAddressArgs) (oc.Address, error) {
 
+	forMaybe, _ := args.GetSubaccount()
 	address, err := c.cli.GetDepositAddress(
 		c.exchange,
-		string(args.GetSymbol()),
-		string(args.GetNetwork()),
+		(args.GetSymbol()),
+		(args.GetNetwork()),
+		(forMaybe),
 	)
 	if err != nil {
 		return "", fmt.Errorf("failed to get deposit address: %w", err)
@@ -213,8 +216,6 @@ func (c *Client) ListWithdrawalHistory(args client.WithdrawalHistoryArgs) ([]*cl
 
 	return result, nil
 }
-
-// Implement additional required methods from the client.Client interface
 
 func (c *Client) ListSubaccounts() ([]*oc.SubAccountHeader, error) {
 	subaccounts, err := c.cli.ListSubaccounts(c.exchange)

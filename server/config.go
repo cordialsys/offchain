@@ -12,7 +12,7 @@ import (
 
 type BearerToken struct {
 	Token secret.Secret `yaml:"token"`
-	Name  string        `yaml:"name"`
+	Id    string        `yaml:"id"`
 }
 
 type Algorithm string
@@ -27,6 +27,7 @@ type HttpPublicKey struct {
 	Algorithm Algorithm `yaml:"algorithm"`
 	// Hex encoded
 	Key hex.Hex `yaml:"key"`
+	Id  string  `yaml:"id"`
 }
 
 type Config struct {

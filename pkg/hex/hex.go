@@ -24,14 +24,20 @@ func (h Hex) MarshalJSON() ([]byte, error) {
 }
 
 func (h *Hex) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
+	var s = string(data)
+	s = strings.Trim(s, "\"")
 	bz, err := hex.DecodeString(strings.TrimPrefix(s, "0x"))
 	if err != nil {
 		return err
 	}
 	*h = bz
 	return nil
+}
+
+func (h Hex) MarshalText() ([]byte, error) {
+	return []byte(h.String()), nil
+}
+
+func (h *Hex) UnmarshalText(data []byte) error {
+	return h.UnmarshalJSON(data)
 }

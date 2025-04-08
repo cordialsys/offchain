@@ -12,10 +12,12 @@ func exportAssets(resp []*oc.Asset) []*api.Asset {
 	assets := make([]*api.Asset, len(resp))
 	for i, a := range resp {
 		assets[i] = &api.Asset{
-			// TODO name
-			Name:    nil,
-			Network: string(a.NetworkId),
-			Symbol:  string(a.SymbolId),
+			// TODO name, chain_id
+			Name:     nil,
+			ChainId:  nil,
+			Network:  string(a.NetworkId),
+			Symbol:   string(a.SymbolId),
+			Contract: api.As(string(a.ContractAddress)),
 		}
 	}
 	return assets
@@ -31,13 +33,13 @@ func GetAssets(c *fiber.Ctx) error {
 	// Create client
 	cli, err := loader.NewClient(exchangeCfg, account)
 	if err != nil {
-		return servererrors.InternalErrorf(c, "failed to create client: %s", err)
+		return servererrors.InternalErrorf("failed to create client: %s", err)
 	}
 
 	// Get assets
 	assets, err := cli.ListAssets()
 	if err != nil {
-		return servererrors.Conflictf(c, "failed to get assets: %s", err)
+		return servererrors.Conflictf("failed to get assets: %s", err)
 	}
 
 	return c.JSON(exportAssets(assets))

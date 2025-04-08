@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"syscall"
@@ -45,10 +46,23 @@ func New(ocConf *oc.Config, args ServerArgs) *Server {
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
+
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			if apiErr, ok := err.(*servererrors.ErrorResponse); ok {
+				return apiErr.Send(c)
+			} else {
+				return servererrors.InternalErrorf("%v", err)
+			}
+		},
 	})
 
 	// Add middleware
-	app.Use(recover.New())
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
+			fmt.Printf("[PANIC] %v\n%s\n", e, debug.Stack())
+		},
+	}))
 	app.Use(logger.New())
 
 	allowOrigins := []string{"http://localhost:3000"}
@@ -97,7 +111,7 @@ func New(ocConf *oc.Config, args ServerArgs) *Server {
 			}
 		}
 		if !verified {
-			return servererrors.Unauthorizedf(c, "%v", lastErr)
+			return servererrors.Unauthorizedf("%v", lastErr)
 		}
 		return c.Next()
 	}
@@ -117,27 +131,31 @@ func New(ocConf *oc.Config, args ServerArgs) *Server {
 				return httpSigAuth(c)
 			}
 
-			return servererrors.BadRequestf(c, "invalid authorization header")
+			return servererrors.BadRequestf("no authorization header or http-signature")
 		}
 		if parts[0] != "Bearer" {
-			return servererrors.BadRequestf(c, "expected Bearer token in authorization header")
+			return servererrors.BadRequestf("expected Bearer token in authorization header")
 		}
 		token := parts[1]
 		if slices.Contains(args.BearerTokens, token) {
 			return c.Next()
 		}
-		return servererrors.Unauthorizedf(c, "invalid bearer token")
+		return servererrors.Unauthorizedf("invalid bearer token")
 	}
 
 	// API routes
 	v1 := app.Group("/v1")
+	// public
+	v1.Get("/exchanges/:exchange/assets", endpoints.GetAssets)
+	v1.Get("/exchanges/:exchange/account-types", endpoints.GetAccountTypes)
+
+	// bearer or http sig auth
 	v1.Get("/exchanges/:exchange/balances", bearerOrHttpSigAuth, endpoints.GetBalances)
-	v1.Get("/exchanges/:exchange/assets", bearerOrHttpSigAuth, endpoints.GetAssets)
 	v1.Get("/exchanges/:exchange/deposit-address", bearerOrHttpSigAuth, endpoints.GetDepositAddress)
-	v1.Get("/exchanges/:exchange/account-types", bearerOrHttpSigAuth, endpoints.GetAccountTypes)
 	v1.Get("/exchanges/:exchange/subaccounts", bearerOrHttpSigAuth, endpoints.ListSubaccounts)
 	v1.Get("/exchanges/:exchange/withdrawal-history", bearerOrHttpSigAuth, endpoints.ListWithdrawalHistory)
 
+	// http sig auth only
 	v1.Post("/exchanges/:exchange/account-transfer", httpSigAuth, endpoints.AccountTransfer)
 	v1.Post("/exchanges/:exchange/withdrawal", httpSigAuth, endpoints.CreateWithdrawal)
 

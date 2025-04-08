@@ -26,33 +26,33 @@ func AccountTransfer(c *fiber.Ctx) error {
 	// Parse request body
 	var req api.Transfer
 	if err := c.BodyParser(&req); err != nil {
-		return servererrors.BadRequestf(c, "invalid request body: %s", err)
+		return servererrors.BadRequestf("invalid request body: %s", err)
 	}
 
 	// Validate required fields
 	symbol := api.DerefOrZero(req.Symbol)
 	if symbol == "" {
-		return servererrors.BadRequestf(c, "symbol is required")
+		return servererrors.BadRequestf("symbol is required")
 	}
 
 	if req.Amount == "" {
-		return servererrors.BadRequestf(c, "amount is required")
+		return servererrors.BadRequestf("amount is required")
 	}
 
 	// Parse amount
 	amount, err := oc.NewAmountFromString(req.Amount)
 	if err != nil {
-		return servererrors.BadRequestf(c, "invalid amount: %s", err)
+		return servererrors.BadRequestf("invalid amount: %s", err)
 	}
 
 	if amount.IsZero() {
-		return servererrors.BadRequestf(c, "amount must be greater than 0")
+		return servererrors.BadRequestf("amount must be greater than 0")
 	}
 
 	// Create client
 	cli, err := loader.NewClient(exchangeCfg, secrets)
 	if err != nil {
-		return servererrors.InternalErrorf(c, "failed to create client: %s", err)
+		return servererrors.InternalErrorf("failed to create client: %s", err)
 	}
 
 	// Prepare transfer arguments
@@ -65,7 +65,7 @@ func AccountTransfer(c *fiber.Ctx) error {
 	if fromType := api.DerefOrZero(req.FromType); fromType != "" {
 		resolvedFromType, ok, message := exchangeCfg.ResolveAccountType(fromType)
 		if !ok {
-			return servererrors.BadRequestf(c, message)
+			return servererrors.BadRequestf(message)
 		}
 		transferArgs.SetFromType(resolvedFromType.Type)
 	} else {
@@ -80,7 +80,7 @@ func AccountTransfer(c *fiber.Ctx) error {
 	if toType := api.DerefOrZero(req.ToType); toType != "" {
 		resolvedToType, ok, message := exchangeCfg.ResolveAccountType(toType)
 		if !ok {
-			return servererrors.BadRequestf(c, message)
+			return servererrors.BadRequestf(message)
 		}
 		transferArgs.SetToType(resolvedToType.Type)
 	} else {
@@ -95,7 +95,7 @@ func AccountTransfer(c *fiber.Ctx) error {
 	if from := api.DerefOrZero(req.From); from != "" {
 		fromSubaccount, ok := exchangeCfg.ResolveSubAccount(from)
 		if !ok {
-			return servererrors.BadRequestf(c, "invalid from account")
+			return servererrors.BadRequestf("invalid from account")
 		}
 		transferArgs.SetFrom(fromSubaccount.Id)
 	}
@@ -104,20 +104,20 @@ func AccountTransfer(c *fiber.Ctx) error {
 	if to := api.DerefOrZero(req.To); to != "" {
 		toSubaccount, ok := exchangeCfg.ResolveSubAccount(to)
 		if !ok {
-			return servererrors.BadRequestf(c, "invalid to account")
+			return servererrors.BadRequestf("invalid to account")
 		}
 		transferArgs.SetTo(toSubaccount.Id)
 	}
 
 	// Ensure at least one transfer parameter is specified
 	if (api.DerefOrZero(req.To) + api.DerefOrZero(req.From) + api.DerefOrZero(req.FromType) + api.DerefOrZero(req.ToType)) == "" {
-		return servererrors.BadRequestf(c, "must specify at least one of to, from, from_type, to_type")
+		return servererrors.BadRequestf("must specify at least one of to, from, from_type, to_type")
 	}
 
 	// Execute transfer
 	resp, err := cli.CreateAccountTransfer(transferArgs)
 	if err != nil {
-		return servererrors.Conflictf(c, "failed to create account transfer: %s", err)
+		return servererrors.Conflictf("failed to create account transfer: %s", err)
 	}
 
 	return c.JSON(exportAccountTransfer(resp))

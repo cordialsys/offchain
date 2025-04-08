@@ -37,7 +37,7 @@ func GetBalances(c *fiber.Ctx) error {
 	// Create client
 	cli, err := loader.NewClient(exchangeCfg, account)
 	if err != nil {
-		return servererrors.InternalErrorf(c, "failed to create client: %s", err)
+		return servererrors.InternalErrorf("failed to create client: %s", err)
 	}
 
 	// Create balance args
@@ -46,7 +46,7 @@ func GetBalances(c *fiber.Ctx) error {
 	// Get balances
 	assets, err := cli.ListBalances(balanceArgs)
 	if err != nil {
-		return servererrors.Conflictf(c, "failed to get balances: %s", err)
+		return servererrors.Conflictf("failed to get balances: %s", err)
 	}
 
 	return c.JSON(exportBalances(assets))

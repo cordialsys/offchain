@@ -33,6 +33,12 @@ type AccountTypeID = string
 
 // Asset defines model for Asset.
 type Asset struct {
+	// ChainId The Cordial Systems chain ID corresponding to the network.
+	ChainId *string `json:"chain_id,omitempty"`
+
+	// Contract The contract address of the asset on the specific network/chain.
+	Contract *string `json:"contract,omitempty"`
+
 	// Name The Cordial Systems "universal" name for an asset (instead of specifying exchange-specific `symbol`, `network`).
 	Name *AssetName `json:"name,omitempty"`
 
@@ -182,6 +188,9 @@ type GetDepositAddressParams struct {
 
 	// Asset Cordial Systems universal asset name.
 	Asset *string `form:"asset,omitempty" json:"asset,omitempty"`
+
+	// For sub-account to query for, if executing from the main account.
+	For *string `form:"for,omitempty" json:"for,omitempty"`
 }
 
 // CreateTransferParams defines parameters for CreateTransfer.

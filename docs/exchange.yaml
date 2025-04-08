@@ -183,6 +183,11 @@ paths:
           description: Cordial Systems universal asset name.
           schema:
             type: string
+        - name: for
+          in: query
+          description: 'sub-account to query for, if executing from the main account.'
+          schema:
+            type: string
         - name: exchange
           in: path
           required: true
@@ -266,6 +271,12 @@ components:
           description: 'Symbol for the network/blockchain that the asset is on, used by the exchange.'
         name:
           $ref: '#/components/schemas/AssetName'
+        contract:
+          type: string
+          description: The contract address of the asset on the specific network/chain.
+        chain_id:
+          type: string
+          description: The Cordial Systems chain ID corresponding to the network.
       required:
         - symbol
         - network

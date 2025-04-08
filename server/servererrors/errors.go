@@ -9,9 +9,18 @@ import (
 
 // ErrorResponse represents a standardized error response
 type ErrorResponse struct {
-	Code    int    `json:"code"`
-	Status  string `json:"status"`
-	Message string `json:"message"`
+	Code       int    `json:"code"`
+	Status     string `json:"status"`
+	Message    string `json:"message"`
+	httpStatus int    `json:"-"`
+}
+
+func (e *ErrorResponse) Error() string {
+	return fmt.Sprintf("code: %d, status: %s, message: %s", e.Code, e.Status, e.Message)
+}
+func (e *ErrorResponse) Send(c *fiber.Ctx) error {
+	c.Status(e.httpStatus)
+	return c.JSON(e)
 }
 
 // HTTP status code to gRPC code mapping
@@ -127,57 +136,58 @@ func statusCodeToString(code int) string {
 }
 
 // sendError sends a standardized error response
-func sendError(c *fiber.Ctx, httpStatus int, message string) error {
+func sendError(httpStatus int, message string) error {
 	code := httpToGRPCCode(httpStatus)
 	status := statusCodeToString(code)
 
-	return c.Status(httpStatus).JSON(ErrorResponse{
-		Code:    code,
-		Status:  status,
-		Message: message,
-	})
+	return &ErrorResponse{
+		Code:       code,
+		Status:     status,
+		Message:    message,
+		httpStatus: httpStatus,
+	}
 }
 
-func NewErrorf(c *fiber.Ctx, code int, msg string, args ...interface{}) error {
-	return sendError(c, code, fmt.Sprintf(msg, args...))
+func NewErrorf(code int, msg string, args ...interface{}) error {
+	return sendError(code, fmt.Sprintf(msg, args...))
 }
 
 // BadRequestf sends a 400 Bad Request error with formatted message
-func BadRequestf(c *fiber.Ctx, format string, args ...interface{}) error {
-	return sendError(c, http.StatusBadRequest, fmt.Sprintf(format, args...))
+func BadRequestf(format string, args ...interface{}) error {
+	return NewErrorf(http.StatusBadRequest, format, args...)
 }
 
 // Unauthorizedf sends a 401 Unauthorized error with formatted message
-func Unauthorizedf(c *fiber.Ctx, format string, args ...interface{}) error {
-	return sendError(c, http.StatusUnauthorized, fmt.Sprintf(format, args...))
+func Unauthorizedf(format string, args ...interface{}) error {
+	return NewErrorf(http.StatusUnauthorized, format, args...)
 }
 
 // Forbiddenf sends a 403 Forbidden error with formatted message
-func Forbiddenf(c *fiber.Ctx, format string, args ...interface{}) error {
-	return sendError(c, http.StatusForbidden, fmt.Sprintf(format, args...))
+func Forbiddenf(format string, args ...interface{}) error {
+	return NewErrorf(http.StatusForbidden, format, args...)
 }
 
 // NotFoundf sends a 404 Not Found error with formatted message
-func NotFoundf(c *fiber.Ctx, format string, args ...interface{}) error {
-	return sendError(c, http.StatusNotFound, fmt.Sprintf(format, args...))
+func NotFoundf(format string, args ...interface{}) error {
+	return NewErrorf(http.StatusNotFound, format, args...)
 }
 
 // Conflictf sends a 409 Conflict error with formatted message
-func Conflictf(c *fiber.Ctx, format string, args ...interface{}) error {
-	return sendError(c, http.StatusConflict, fmt.Sprintf(format, args...))
+func Conflictf(format string, args ...interface{}) error {
+	return NewErrorf(http.StatusConflict, format, args...)
 }
 
 // InternalErrorf sends a 500 Internal Server Error with formatted message
-func InternalErrorf(c *fiber.Ctx, format string, args ...interface{}) error {
-	return sendError(c, http.StatusInternalServerError, fmt.Sprintf(format, args...))
+func InternalErrorf(format string, args ...interface{}) error {
+	return NewErrorf(http.StatusInternalServerError, format, args...)
 }
 
 // NotImplementedf sends a 501 Not Implemented error with formatted message
-func NotImplementedf(c *fiber.Ctx, format string, args ...interface{}) error {
-	return sendError(c, http.StatusNotImplemented, fmt.Sprintf(format, args...))
+func NotImplementedf(format string, args ...interface{}) error {
+	return NewErrorf(http.StatusNotImplemented, format, args...)
 }
 
 // Unavailablef sends a 503 Service Unavailable error with formatted message
-func Unavailablef(c *fiber.Ctx, format string, args ...interface{}) error {
-	return sendError(c, http.StatusServiceUnavailable, fmt.Sprintf(format, args...))
+func Unavailablef(format string, args ...interface{}) error {
+	return NewErrorf(http.StatusServiceUnavailable, format, args...)
 }

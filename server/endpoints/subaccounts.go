@@ -29,13 +29,13 @@ func ListSubaccounts(c *fiber.Ctx) error {
 	// Create client
 	cli, err := loader.NewClient(exchangeCfg, account)
 	if err != nil {
-		return servererrors.InternalErrorf(c, "failed to create client: %s", err)
+		return servererrors.InternalErrorf("failed to create client: %s", err)
 	}
 
 	// Get subaccounts
 	subaccounts, err := cli.ListSubaccounts()
 	if err != nil {
-		return servererrors.Conflictf(c, "failed to list subaccounts: %s", err)
+		return servererrors.Conflictf("failed to list subaccounts: %s", err)
 	}
 
 	return c.JSON(exportSubaccounts(subaccounts))

@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
 
+	oc "github.com/cordialsys/offchain"
 	"github.com/cordialsys/offchain/pkg/httpsignature"
 	"github.com/cordialsys/offchain/pkg/httpsignature/signer"
 	"github.com/cordialsys/offchain/server/client/api"
@@ -110,6 +112,7 @@ func (c *Client) doRequest(method, path string, queryParams url.Values, body int
 		}
 		bodyReader = bytes.NewReader(bodyBytes)
 	}
+	log := slog.With("method", method, "url", reqURL.String(), "path", path, "query", reqURL.RawQuery, "body", string(bodyBytes))
 
 	// Create the request
 	req, err := http.NewRequest(method, reqURL.String(), bodyReader)
@@ -126,18 +129,22 @@ func (c *Client) doRequest(method, path string, queryParams url.Values, body int
 	if method == http.MethodGet && c.bearerToken != "" {
 		// For GET requests, prefer bearer token if available
 		req.Header.Set("Authorization", "Bearer "+c.bearerToken)
+		log = log.With("auth", "bearer")
 	} else if c.signer != nil {
 		// For non-GET requests or if bearer token is not available, use HTTP signature
 		err = httpsignature.Sign(req, c.signer)
 		if err != nil {
 			return fmt.Errorf("failed to sign request: %w", err)
 		}
+		log = log.With("auth", "http-signature")
 	} else if c.bearerToken != "" {
 		// Fall back to bearer token for GET requests if HTTP signature is not available
 		req.Header.Set("Authorization", "Bearer "+c.bearerToken)
+		log = log.With("auth", "bearer")
 	} else {
-		return fmt.Errorf("no authentication method provided")
+		log = log.With("auth", "none")
 	}
+	log.Debug("offchain request")
 
 	// Execute the request
 	resp, err := c.httpClient.Do(req)
@@ -145,24 +152,26 @@ func (c *Client) doRequest(method, path string, queryParams url.Values, body int
 		return fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
+	responseBody, _ := io.ReadAll(resp.Body)
+
+	log.Debug("offchain response", "status", resp.StatusCode, "body", string(responseBody))
 
 	// Check for non-200 status codes
 	if resp.StatusCode != http.StatusOK {
 		// Try to parse as structured error
 		var apiError APIError
-		bodyBytes, _ := io.ReadAll(resp.Body)
 
-		if err := json.Unmarshal(bodyBytes, &apiError); err == nil && apiError.Message != "" {
+		if err := json.Unmarshal(responseBody, &apiError); err == nil && apiError.Message != "" {
 			return &apiError
 		}
 
 		// Fall back to generic error if parsing fails
-		return fmt.Errorf("API error: %s, status code: %d", string(bodyBytes), resp.StatusCode)
+		return fmt.Errorf("API error: %s, status code: %d", string(responseBody), resp.StatusCode)
 	}
 
 	// Parse the response if a result container was provided
 	if result != nil {
-		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
+		if err := json.Unmarshal(responseBody, result); err != nil {
 			return fmt.Errorf("failed to decode response: %w", err)
 		}
 	}
@@ -171,7 +180,7 @@ func (c *Client) doRequest(method, path string, queryParams url.Values, body int
 }
 
 // GetBalances retrieves balances for a specified account
-func (c *Client) GetBalances(exchange string, accountType string) ([]*api.Balance, error) {
+func (c *Client) GetBalances(exchange oc.ExchangeId, accountType string) ([]*api.Balance, error) {
 	queryParams := url.Values{}
 	if accountType != "" {
 		queryParams.Set("type", accountType)
@@ -183,17 +192,20 @@ func (c *Client) GetBalances(exchange string, accountType string) ([]*api.Balanc
 }
 
 // GetAssets retrieves the list of assets for a specified exchange
-func (c *Client) GetAssets(exchange string) ([]*api.Asset, error) {
+func (c *Client) GetAssets(exchange oc.ExchangeId) ([]*api.Asset, error) {
 	var assets []*api.Asset
 	err := c.doRequest(http.MethodGet, fmt.Sprintf("/v1/exchanges/%s/assets", exchange), nil, nil, &assets)
 	return assets, err
 }
 
 // GetDepositAddress retrieves a deposit address for a specified symbol and network
-func (c *Client) GetDepositAddress(exchange, symbol, network string) (string, error) {
+func (c *Client) GetDepositAddress(exchange oc.ExchangeId, symbol oc.SymbolId, network oc.NetworkId, subAccountForMaybe oc.AccountId) (string, error) {
 	queryParams := url.Values{}
-	queryParams.Set("symbol", symbol)
-	queryParams.Set("network", network)
+	queryParams.Set("symbol", string(symbol))
+	queryParams.Set("network", string(network))
+	if c.subAccount != "" {
+		queryParams.Set("for", string(c.subAccount))
+	}
 
 	var address string
 	err := c.doRequest(http.MethodGet, fmt.Sprintf("/v1/exchanges/%s/deposit-address", exchange), queryParams, nil, &address)
@@ -201,21 +213,21 @@ func (c *Client) GetDepositAddress(exchange, symbol, network string) (string, er
 }
 
 // GetAccountTypes retrieves the list of valid account types for an exchange
-func (c *Client) GetAccountTypes(exchange string) ([]*api.AccountType, error) {
+func (c *Client) GetAccountTypes(exchange oc.ExchangeId) ([]*api.AccountType, error) {
 	var accountTypes []*api.AccountType
 	err := c.doRequest(http.MethodGet, fmt.Sprintf("/v1/exchanges/%s/account-types", exchange), nil, nil, &accountTypes)
 	return accountTypes, err
 }
 
 // ListSubaccounts retrieves the list of configured subaccounts on an exchange
-func (c *Client) ListSubaccounts(exchange string) ([]*api.SubAccountHeader, error) {
+func (c *Client) ListSubaccounts(exchange oc.ExchangeId) ([]*api.SubAccountHeader, error) {
 	var subaccounts []*api.SubAccountHeader
 	err := c.doRequest(http.MethodGet, fmt.Sprintf("/v1/exchanges/%s/subaccounts", exchange), nil, nil, &subaccounts)
 	return subaccounts, err
 }
 
 // ListWithdrawalHistory retrieves the withdrawal history for an exchange account
-func (c *Client) ListWithdrawalHistory(exchange string, limit int, pageToken string) ([]*api.HistoricalWithdrawal, error) {
+func (c *Client) ListWithdrawalHistory(exchange oc.ExchangeId, limit int, pageToken string) ([]*api.HistoricalWithdrawal, error) {
 	queryParams := url.Values{}
 	if limit > 0 {
 		queryParams.Set("limit", fmt.Sprintf("%d", limit))
@@ -230,7 +242,7 @@ func (c *Client) ListWithdrawalHistory(exchange string, limit int, pageToken str
 }
 
 // CreateAccountTransfer performs a transfer between accounts on an exchange
-func (c *Client) CreateAccountTransfer(exchange string, transfer *api.Transfer) (*api.TransferResponse, error) {
+func (c *Client) CreateAccountTransfer(exchange oc.ExchangeId, transfer *api.Transfer) (*api.TransferResponse, error) {
 	// HTTP signature is required for this endpoint
 	if c.signer == nil {
 		return nil, fmt.Errorf("HTTP signature is required for account transfers")
@@ -245,7 +257,7 @@ func (c *Client) CreateAccountTransfer(exchange string, transfer *api.Transfer) 
 }
 
 // CreateWithdrawal initiates a withdrawal from an exchange
-func (c *Client) CreateWithdrawal(exchange string, withdrawal *api.Withdrawal) (*api.WithdrawalResponse, error) {
+func (c *Client) CreateWithdrawal(exchange oc.ExchangeId, withdrawal *api.Withdrawal) (*api.WithdrawalResponse, error) {
 	// HTTP signature is required for this endpoint
 	if c.signer == nil {
 		return nil, fmt.Errorf("HTTP signature is required for withdrawals")

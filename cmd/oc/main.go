@@ -8,6 +8,7 @@ import (
 
 	"github.com/cordialsys/offchain/cmd"
 	"github.com/cordialsys/offchain/cmd/oc/exchange"
+	"github.com/cordialsys/offchain/cmd/oc/keys"
 	"github.com/spf13/cobra"
 )
 
@@ -36,6 +37,8 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewSecretCmd())
 	cmd.AddCommand(NewStartCmd())
 	cmd.AddCommand(exchange.NewExchangeCmd())
+	cmd.AddCommand(exchange.NewOffchainClientCmd())
+	cmd.AddCommand(keys.NewKeysCmd())
 	cmd.PersistentFlags().CountVarP(
 		&verbose,
 		"verbose",

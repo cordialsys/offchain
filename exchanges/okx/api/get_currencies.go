@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	oc "github.com/cordialsys/offchain"
 	rebal "github.com/cordialsys/offchain"
 )
 
@@ -13,8 +14,8 @@ type CurrencyInfo struct {
 	CanDep               bool                  `json:"canDep"`
 	CanInternal          bool                  `json:"canInternal"`
 	CanWd                bool                  `json:"canWd"`
-	Currency             string                `json:"ccy"`
-	Chain                string                `json:"chain"`
+	Currency             oc.SymbolId           `json:"ccy"`
+	Chain                SymbolAndChain        `json:"chain"`
 	ContractAddress      rebal.ContractAddress `json:"ctAddr"`
 	DepEstOpenTime       string                `json:"depEstOpenTime"`
 	DepQuotaFixed        string                `json:"depQuotaFixed"`
